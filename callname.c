@@ -1431,6 +1431,14 @@ const char* callname(long call) {
 	case SYS_waitpid : return "waitpid";
 #endif
 
+#ifdef SYS_prlimit64
+	case SYS_prlimit64 : return "prlimit64";
+#endif
+
+#ifdef SYS_getrandom
+	case SYS_getrandom : return "getrandom";
+#endif
+
 	default:
 			   return "unknown";
     }

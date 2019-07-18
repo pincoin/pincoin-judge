@@ -29,12 +29,12 @@ int main(int argc, char *argv[]) {
 
     scmp_filter_ctx ctx;
     ctx = seccomp_init(SCMP_ACT_KILL); // default action: kill
+
     // setup basic whitelist
     seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(rt_sigreturn), 0);
     seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(exit), 0);
     seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(read), 0);
     seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(write), 0);
-
 
     pid = fork();
 
@@ -43,21 +43,19 @@ int main(int argc, char *argv[]) {
     if (pid != 0) {
 	printf("parent %d\n", pid);
 
-	int i = 0;
-
 	while(waitpid(pid, &status, 0) && !WIFEXITED(status)) {
 	    ptrace(PTRACE_GETREGS, pid, NULL, &regs);
-	    fprintf(stderr, "%d ", i);
 
+	    /*
 	    if (disabled_syscalls[REG(regs)] == 1) {
 		fprintf(stderr, "runtime error %s(%lld) from pid %d\n", callname(REG(regs)), REG(regs), pid);
 		//ptrace(PTRACE_KILL, pid, NULL, NULL);
 		kill(pid, SIGKILL);
 	    }
+	    */
 	    fprintf(stderr, "%s(%lld) from pid %d\n", callname(REG(regs)), REG(regs), pid);
 
 	    ptrace(PTRACE_SYSCALL, pid, NULL, NULL);
-	    i++;
 	}
 
     } else if (pid == 0) {
