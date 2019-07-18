@@ -10,4 +10,4 @@ callname.o: callname.c
 	gcc -Wall -o callname.o -c callname.c
 
 clean:
-	rm -f a.out judge.o callname.o
+	rm -f a.out judge.o callname.o std.out err.out

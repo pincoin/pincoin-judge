@@ -20,6 +20,7 @@ int whitelist_syscall[] = {
     SCMP_SYS(access),
     SCMP_SYS(arch_prctl),
     SCMP_SYS(brk),
+    SCMP_SYS(clone),
     SCMP_SYS(close),
     SCMP_SYS(dup),
     SCMP_SYS(execve),
@@ -80,37 +81,47 @@ int main(int argc, char *argv[]) {
                 fprintf(stderr, "terminated with code %d\n", WEXITSTATUS(status));
                 break;
             } else if (WIFSIGNALED(status)) {
-                fprintf(stderr, "terminated by signal %d\n", WTERMSIG(status));
+                if (WTERMSIG(status) == 31) {
+                    fprintf(stderr, "terminated by system call violation\n");
+                } else {
+                    fprintf(stderr, "terminated by signal %d\n", WTERMSIG(status));
+                }
                 break;
-            } else if (WIFSTOPPED(status)) {
-                fprintf(stderr, "stopped by signal %d\n", WSTOPSIG(status));
-                break;
-            }
+            }	  
 
-	    ptrace(PTRACE_GETREGS, pid, NULL, &regs);
-
-            fprintf(stderr, "runtime error %s(%lld) from pid %d\n", callname(REG(regs)), REG(regs), pid);
+            ptrace(PTRACE_GETREGS, pid, NULL, &regs);
 
             /*
 	    if (disabled_syscalls[REG(regs)] == 1) {
+                fprintf(stderr, "runtime error %s(%lld) from pid %d\n", callname(REG(regs)), REG(regs), pid);
 		//ptrace(PTRACE_KILL, pid, NULL, NULL);
 		kill(pid, SIGKILL);
 	    }
             */
 
-	    fprintf(stderr, "%s(%lld) from pid %d\n", callname(REG(regs)), REG(regs), pid);
+	    //fprintf(stderr, "%s(%lld) from pid %d\n", callname(REG(regs)), REG(regs), pid);
 
 	    ptrace(PTRACE_SYSCALL, pid, NULL, NULL);
         }
     } else if (pid == 0) {
-	freopen("std.in", "r", stdin);
-	freopen("std.out", "w", stdout);
-	freopen("err.out", "a+", stderr);
+        /*
+        FILE *fp_in = freopen("std.in", "r", stdin);
+	FILE *fp_out = freopen("std.out", "w", stdout);
+	FILE *fp_error = freopen("err.out", "a+", stderr);
+        */
 
 	ptrace(PTRACE_TRACEME, 0, NULL, NULL);
 
         seccomp_load(ctx);
-	execl("/usr/bin/python3", "python3", "./test.py", NULL);
+	execl("/usr/bin/java", "java", "Test", NULL);
+	//execl("/usr/bin/python3", "python", "./test.py", NULL);
+	execl("./test.out", "./test.out", NULL);
+
+        /*
+        fclose(fp_in);
+        fclose(fp_out);
+        fclose(fp_error);
+        */
 
 	exit(0);
     } else {
