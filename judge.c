@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <seccomp.h>
+#include <sys/prctl.h>
 #include <sys/ptrace.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -14,40 +16,62 @@
 
 const char* callname(long call);
 
-int main(int argc, char *argv[]) {
-    char* chargs[argc];
-    int i = 0;
+int disabled_syscalls[512] = {-1};
 
+int main(int argc, char *argv[]) {
     pid_t pid = 0;
     int status;
+
     struct user_regs_struct regs;
 
-    if (argc == 1) {
-	exit(0);
-    }
+    prctl(PR_SET_NO_NEW_PRIVS, 1);
+    prctl(PR_SET_DUMPABLE, 0);
 
-    // construct command
-    while (i < argc - 1) {
-	chargs[i] = argv[i+1];
-	i++;
-    }
-    chargs[i] = NULL;
+    scmp_filter_ctx ctx;
+    ctx = seccomp_init(SCMP_ACT_KILL); // default action: kill
+    // setup basic whitelist
+    seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(rt_sigreturn), 0);
+    seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(exit), 0);
+    seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(read), 0);
+    seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(write), 0);
+
 
     pid = fork();
+
+    disabled_syscalls[78] = 1;
 
     if (pid != 0) {
 	printf("parent %d\n", pid);
 
-	while(waitpid(pid, &status, 0) && ! WIFEXITED(status)) {
+	int i = 0;
+
+	while(waitpid(pid, &status, 0) && !WIFEXITED(status)) {
 	    ptrace(PTRACE_GETREGS, pid, NULL, &regs);
-	    fprintf(stderr, "system call %s from pid %d\n", callname(REG(regs)), pid);
+	    fprintf(stderr, "%d ", i);
+
+	    if (disabled_syscalls[REG(regs)] == 1) {
+		fprintf(stderr, "runtime error %s(%lld) from pid %d\n", callname(REG(regs)), REG(regs), pid);
+		//ptrace(PTRACE_KILL, pid, NULL, NULL);
+		kill(pid, SIGKILL);
+	    }
+	    fprintf(stderr, "%s(%lld) from pid %d\n", callname(REG(regs)), REG(regs), pid);
+
 	    ptrace(PTRACE_SYSCALL, pid, NULL, NULL);
+	    i++;
 	}
 
     } else if (pid == 0) {
+	freopen("std.in", "r", stdin);
+	freopen("std.out", "w", stdout);
+	freopen("err.out", "a+", stderr);
+
 	printf("child %d\n", pid);
+
 	ptrace(PTRACE_TRACEME, 0, NULL, NULL);
-	execvp(chargs[0], chargs);
+
+	execl("/usr/bin/python3", "python3", "./test.py", NULL);
+
+	exit(0);
     } else {
 	perror("failed to fork");
     }
