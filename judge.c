@@ -104,24 +104,21 @@ int main(int argc, char *argv[]) {
 	    ptrace(PTRACE_SYSCALL, pid, NULL, NULL);
         }
     } else if (pid == 0) {
-        /*
         FILE *fp_in = freopen("std.in", "r", stdin);
 	FILE *fp_out = freopen("std.out", "w", stdout);
 	FILE *fp_error = freopen("err.out", "a+", stderr);
-        */
 
 	ptrace(PTRACE_TRACEME, 0, NULL, NULL);
 
         seccomp_load(ctx);
-	execl("/usr/bin/java", "java", "Test", NULL);
+	execl("/usr/bin/java", "/usr/bin/java", "Test", NULL);
 	//execl("/usr/bin/python3", "python", "./test.py", NULL);
-	execl("./test.out", "./test.out", NULL);
+	//execl("./test.out", "./test.out", NULL);
+        seccomp_release(ctx);
 
-        /*
         fclose(fp_in);
         fclose(fp_out);
         fclose(fp_error);
-        */
 
 	exit(0);
     } else {
