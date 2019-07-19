@@ -101,6 +101,9 @@ int main(int argc, char *argv[]) {
 
         // 5. runtime error or match (maybe in Python)
 
+        fflush(fp_out);
+        fflush(fp_error);
+
         fclose(fp_in);
         fclose(fp_out);
         fclose(fp_error);
