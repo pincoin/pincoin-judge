@@ -58,9 +58,10 @@ int main(int argc, char *argv[]) {
 
 	ptrace(PTRACE_TRACEME, 0, NULL, NULL);
 
-        seccomp_load(ctx);
+        //seccomp_load(ctx);
 
-	execl("/usr/bin/java", "/usr/bin/java", "test/Test", NULL);
+	//execl("/usr/bin/java", "/usr/bin/java", "test/Test", NULL);
+	execl("/usr/bin/mono", "/usr/bin/mono", "test/test.exe", NULL);
 	//execl("/usr/bin/python3", "python", "test/test.py", NULL);
 	//execl("test/testc.out", "test/test.out", NULL);
 	//execl("test/testcpp.out", "test/test.out", NULL);

@@ -2,9 +2,10 @@
 
 
 int whitelist_syscall[] = {
-    SCMP_SYS(access),
+    SCMP_SYS(access), // check file access at
     SCMP_SYS(arch_prctl),
     SCMP_SYS(brk),
+    SCMP_SYS(clock_getres),
     SCMP_SYS(clone),
     SCMP_SYS(close),
     SCMP_SYS(dup),
@@ -12,6 +13,7 @@ int whitelist_syscall[] = {
     SCMP_SYS(exit_group),
     SCMP_SYS(fcntl),
     SCMP_SYS(fstat),
+    SCMP_SYS(ftruncate), // check
     SCMP_SYS(futex),
     SCMP_SYS(getcwd),
     SCMP_SYS(getdents),
@@ -22,22 +24,29 @@ int whitelist_syscall[] = {
     SCMP_SYS(getrandom),
     SCMP_SYS(getuid),
     SCMP_SYS(ioctl),
+    SCMP_SYS(kill), // do kill
     SCMP_SYS(lseek),
-    SCMP_SYS(lstat),
+    SCMP_SYS(lstat), // check file access
     SCMP_SYS(mmap),
     SCMP_SYS(mprotect),
     SCMP_SYS(munmap),
-    SCMP_SYS(openat),
+    SCMP_SYS(openat), // check file access at
+    SCMP_SYS(prctl), // do prctl
     SCMP_SYS(prlimit64),
-    SCMP_SYS(read),
-    SCMP_SYS(readlink),
+    SCMP_SYS(read), // cehck file access
+    SCMP_SYS(readlink), // check file access at
     SCMP_SYS(rt_sigaction),
     SCMP_SYS(rt_sigprocmask),
+    SCMP_SYS(sched_getaffinity),
+    SCMP_SYS(sched_yield),
     SCMP_SYS(set_robust_list),
     SCMP_SYS(set_tid_address),
     SCMP_SYS(sigaltstack),
-    SCMP_SYS(stat),
+    SCMP_SYS(stat), // check file access
+    SCMP_SYS(statfs),
     SCMP_SYS(sysinfo),
+    SCMP_SYS(tgkill), // do kill
+    SCMP_SYS(unlink), // access eperm
     SCMP_SYS(write)
 };
 

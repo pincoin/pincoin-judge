@@ -55,7 +55,8 @@ dkms.conf
 Test.java
 Test.class
 test.py
-test.c
+test.cpp
+test.cs
 std.in
 std.out
 err.out
