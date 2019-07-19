@@ -7,8 +7,8 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/user.h>
-#include "judge.h"
 #include "callname.h"
+#include "whitelist.h"
 
 
 int main(int argc, char *argv[]) {
@@ -37,24 +37,17 @@ int main(int argc, char *argv[]) {
                 break;
             } else if (WIFSIGNALED(status)) {
                 if (WTERMSIG(status) == 31) {
-                    fprintf(stderr, "terminated by system call violation\n");
+                    fprintf(stderr, "killed by system call violation\n");
                 } else {
                     fprintf(stderr, "terminated by signal %d\n", WTERMSIG(status));
                 }
                 break;
             }	  
 
+            ptrace(PTRACE_SETOPTIONS, pid, 0, PTRACE_O_TRACESECCOMP);
             ptrace(PTRACE_GETREGS, pid, NULL, &regs);
 
-            /*
-	    if (disabled_syscalls[REG(regs)] == 1) {
-                fprintf(stderr, "runtime error %s(%lld) from pid %d\n", callname(REG(regs)), REG(regs), pid);
-		//ptrace(PTRACE_KILL, pid, NULL, NULL);
-		kill(pid, SIGKILL);
-	    }
-            */
-
-	    //fprintf(stderr, "%s(%lld) from pid %d\n", callname(REG(regs)), REG(regs), pid);
+	    fprintf(stderr, "%s(%lld) from pid %d\n", callname(REG(regs)), REG(regs), pid);
 
 	    ptrace(PTRACE_SYSCALL, pid, NULL, NULL);
         }
@@ -66,9 +59,12 @@ int main(int argc, char *argv[]) {
 	ptrace(PTRACE_TRACEME, 0, NULL, NULL);
 
         seccomp_load(ctx);
-	execl("/usr/bin/java", "/usr/bin/java", "Test", NULL);
-	//execl("/usr/bin/python3", "python", "./test.py", NULL);
-	//execl("./test.out", "./test.out", NULL);
+
+	execl("/usr/bin/java", "/usr/bin/java", "test/Test", NULL);
+	//execl("/usr/bin/python3", "python", "test/test.py", NULL);
+	//execl("test/testc.out", "test/test.out", NULL);
+	//execl("test/testcpp.out", "test/test.out", NULL);
+
         seccomp_release(ctx);
 
         fclose(fp_in);
@@ -82,47 +78,3 @@ int main(int argc, char *argv[]) {
 
     return 0;
 }
-
-
-int whitelist_syscall[] = {
-    SCMP_SYS(access),
-    SCMP_SYS(arch_prctl),
-    SCMP_SYS(brk),
-    SCMP_SYS(clone),
-    SCMP_SYS(close),
-    SCMP_SYS(dup),
-    SCMP_SYS(execve),
-    SCMP_SYS(exit_group),
-    SCMP_SYS(fcntl),
-    SCMP_SYS(fstat),
-    SCMP_SYS(futex),
-    SCMP_SYS(getcwd),
-    SCMP_SYS(getdents),
-    SCMP_SYS(getegid),
-    SCMP_SYS(geteuid),
-    SCMP_SYS(getgid),
-    SCMP_SYS(getpid),
-    SCMP_SYS(getrandom),
-    SCMP_SYS(getuid),
-    SCMP_SYS(ioctl),
-    SCMP_SYS(lseek),
-    SCMP_SYS(lstat),
-    SCMP_SYS(mmap),
-    SCMP_SYS(mprotect),
-    SCMP_SYS(munmap),
-    SCMP_SYS(openat),
-    SCMP_SYS(prlimit64),
-    SCMP_SYS(read),
-    SCMP_SYS(readlink),
-    SCMP_SYS(rt_sigaction),
-    SCMP_SYS(rt_sigprocmask),
-    SCMP_SYS(set_robust_list),
-    SCMP_SYS(set_tid_address),
-    SCMP_SYS(sigaltstack),
-    SCMP_SYS(stat),
-    SCMP_SYS(sysinfo),
-    SCMP_SYS(write)
-};
-
-int size_of_whitelist_syscall = sizeof(whitelist_syscall) / sizeof(int);
-
