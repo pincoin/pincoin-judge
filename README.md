@@ -19,6 +19,7 @@ Supported languages
 * mono-mcs
 * nodejs
 * npm
+* php-cli
 
 ## PIP3
 * Cython

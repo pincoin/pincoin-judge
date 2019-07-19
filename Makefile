@@ -1,7 +1,10 @@
 all: a.out
 
-a.out: judge.o callname.o whitelist.o
-	gcc -Wall -o a.out judge.o callname.o whitelist.o -lseccomp
+a.out: main.o
+	gcc -Wall -o a.out main.o -lseccomp
+
+main.o: main.c
+	gcc -g -Wall -D DEBUG -D PTRACE -o main.o -c main.c
 
 judge.o: judge.c
 	gcc -g -Wall -o judge.o -c judge.c
@@ -13,4 +16,4 @@ whitelist.o: whitelist.c whitelist.h
 	gcc -g -Wall -o whitelist.o -c whitelist.c
 
 clean:
-	rm -f a.out judge.o callname.o std.out err.out
+	rm -f a.out main.o judge.o callname.o whitelist.o std.out err.out

@@ -57,7 +57,10 @@ Test.class
 test.py
 test.cpp
 test.cs
+test.php
+node_modules
+
 std.in
 std.out
 err.out
-node_modules
+*.log

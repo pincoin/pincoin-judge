@@ -56,18 +56,18 @@ int main(int argc, char *argv[]) {
 	FILE *fp_out = freopen("std.out", "w", stdout);
 	FILE *fp_error = freopen("err.out", "a+", stderr);
 
-	ptrace(PTRACE_TRACEME, 0, NULL, NULL);
+	//ptrace(PTRACE_TRACEME, 0, NULL, NULL);
 
         seccomp_load(ctx);
 
-	//execl("/usr/bin/java", "/usr/bin/java", "test/Test", NULL);
+	execl("/usr/bin/java", "/usr/bin/java", "test/Test", NULL);
 	//execl("/usr/bin/mono", "/usr/bin/mono", "test/test.exe", NULL);
 	//execl("/usr/bin/python3", "python", "test/test.py", NULL);
 	//execl("test/testc.out", "test/test.out", NULL);
 	//execl("test/testcpp.out", "test/test.out", NULL);
-	execl("/usr/bin/nodejs", "/usr/bin/nodejs", "test/test.js", NULL);
+	//execl("/usr/bin/nodejs", "/usr/bin/nodejs", "test/test.js", NULL);
 
-        seccomp_release(ctx);
+        //seccomp_release(ctx);
 
         fclose(fp_in);
         fclose(fp_out);
