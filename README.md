@@ -12,7 +12,13 @@
 * build-essential
 * libseccomp-dev
 * python3-dev
+
+Supported languages
+* python3
 * openjdk-11-jdk
+* mono-mcs
+* nodejs
+* npm
 
 ## PIP3
 * Cython

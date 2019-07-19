@@ -9,6 +9,8 @@ int whitelist_syscall[] = {
     SCMP_SYS(clone),
     SCMP_SYS(close),
     SCMP_SYS(dup),
+    SCMP_SYS(epoll_create1),
+    SCMP_SYS(eventfd2),
     SCMP_SYS(execve),
     SCMP_SYS(exit_group),
     SCMP_SYS(fcntl),
@@ -31,6 +33,8 @@ int whitelist_syscall[] = {
     SCMP_SYS(mprotect),
     SCMP_SYS(munmap),
     SCMP_SYS(openat), // check file access at
+    SCMP_SYS(pipe2),
+    SCMP_SYS(poll),
     SCMP_SYS(prctl), // do prctl
     SCMP_SYS(prlimit64),
     SCMP_SYS(read), // cehck file access
