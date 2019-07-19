@@ -23,13 +23,16 @@
 int main(int argc, char *argv[]) {
     pid_t cpid;
     int wstatus;
+
     struct user_regs_struct regs;
+
     struct timespec tstart={0, 0}, tend={0, 0};
-    scmp_filter_ctx ctx = seccomp_init(SCMP_ACT_KILL); // default action: kill
+
+    scmp_filter_ctx ctx = seccomp_init(SCMP_ACT_KILL);
 
     FILE *fp_in = freopen("std.in", "r", stdin);
     FILE *fp_out = freopen("std.out", "w", stdout);
-    FILE *fp_error = freopen("err.out", "a+", stderr);
+    FILE *fp_error = freopen("err.log", "a+", stderr);
 
     // build rules for whitelist of system calls
     for (int i = 0; i < size_of_whitelist_syscall; i++) {

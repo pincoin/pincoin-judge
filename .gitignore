@@ -62,5 +62,4 @@ node_modules
 
 std.in
 std.out
-err.out
 *.log
