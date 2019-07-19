@@ -10,4 +10,5 @@ whitelist.o: whitelist.c whitelist.h
 	gcc -g -Wall -o whitelist.o -c whitelist.c
 
 clean:
-	rm -f a.out main.o judge.o whitelist.o std.out err.log
+	rm -f a.out *.o
+	rm -f *.out *.log
