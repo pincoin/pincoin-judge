@@ -1,11 +1,8 @@
 #include <stdio.h>
-
 int main() {
-	int a, b;
-
-	scanf("%d %d",&a,&b);
-        printf("Hello world C\n");
-	printf("%d\n",a+b);
-
-	return 0;
+    int a, b;
+    printf("Hello, world C11\n");
+    scanf("%d %d", &a, &b);
+    printf("%d\n", a + b);
+    return 0;
 }

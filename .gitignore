@@ -54,6 +54,7 @@ dkms.conf
 # Test
 Test.class
 node_modules
+package.json
 
 std.in
 std.out

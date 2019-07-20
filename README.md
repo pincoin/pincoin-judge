@@ -17,12 +17,17 @@ Supported languages
 * python3
 * openjdk-11-jdk
 * mono-mcs
+* libmono-system-numerics4.0-cil
 * nodejs
 * npm
 * php-cli
 
-## PIP3
+### npm
+```
+npm init
+npm install file-system
+```
+
+### PIP3
 * Cython
 
-# seccomp sandboxing
-gcc -Wall seccomp2.c -l seccomp
