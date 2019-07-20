@@ -1,4 +1,3 @@
-import contextlib
 import re
 
 from contextlib import closing

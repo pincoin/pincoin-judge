@@ -35,11 +35,12 @@ int main(int argc, char *argv[]) {
     FILE *fp_out = freopen("std.out", "w", stdout);
     FILE *fp_error = freopen("err.log", "a+", stderr);
 
-    // build rules for whitelist of system calls
+    /* build rules for whitelist of system calls */
     for (int i = 0; i < size_of_whitelist_syscall; i++) {
         seccomp_rule_add(ctx, SCMP_ACT_ALLOW, whitelist_syscall[i], 0);
     }
 
+    /* socket(AF_UNIX, ... */
     seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(socket), 1,
             SCMP_A0(SCMP_CMP_EQ, AF_UNIX));
 
