@@ -1,6 +1,6 @@
 # Python3
-* compile: `python3 -c "import py_compile; py_compile.compile(r'Main.py')"`
-* run: `python3 Main.py`
+* compile: `python3 -c "import py_compile; py_compile.compile(r'test.py')"`
+* run: `python3 test.py`
 * version: python 3.6.8
 * time constraint: x3+2 sec
 * memory constraint: x2+32MB
@@ -15,8 +15,8 @@ apt-get install python3
 ```
 
 # C11
-* compile: `gcc Main.c -o Mainc.out -O2 -Wall -lm -static -std=c11`
-* run: `./Mainc.out`
+* compile: `gcc test.c -o testc.out -O2 -Wall -lm -static -std=c11`
+* run: `./testc.out`
 * version: gcc 7.4.0
 
 ```c
@@ -34,8 +34,8 @@ apt-get install build-essential
 ```
 
 # C++17
-* compile: `g++ Main.cc -o Maincpp.out -O2 -Wall -lm -static -std=gnu++17`
-* run: `./Maincpp.out`
+* compile: `g++ test.cc -o testcpp.out -O2 -Wall -lm -static -std=gnu++17`
+* run: `./testcpp.out`
 * version: g++ 7.4.0
 
 ```cpp
@@ -54,15 +54,15 @@ apt-get install build-essential
 ```
 
 # Java11 OpenJDK
-* compile: `javac -J-Xms1024m -J-Xmx1024m -J-Xss512m -encoding UTF-8 Main.java`
-* run: `java -Xms1024m -Xmx1024m -Xss512m -Dfile.encoding=UTF-8 -Djava.security.manager -Djava.security.policy=java.policy Main`
+* compile: `javac -J-Xms1024m -J-Xmx1024m -J-Xss512m -encoding UTF-8 Test.java`
+* run: `java -Xms1024m -Xmx1024m -Xss512m -Dfile.encoding=UTF-8 -Djava.security.manager -Djava.security.policy==test/java.policy Test`
 * version: openjdk 11.0.3
 * time constraint: x2+1 sec
 * memory constraint: x2+16MB
 
 ```java
 import java.util.*;
-public class Main{
+public class Test{
     public static void main(String args[]){
         Scanner sc = new Scanner(System.in);
         int a, b;
@@ -78,8 +78,8 @@ apt-get install openjdk-11-jdk
 ```
 
 # C#
-* compile: `mcs -codepage:utf8 -warn:0 -optimize+ -checked+ -clscheck- -reference:System.Numerics.dll -out:Main.exe Main.cs`
-* run: `mono --optimize=all Main.exe`
+* compile: `mcs -codepage:utf8 -warn:0 -optimize+ -checked+ -clscheck- -reference:System.Numerics.dll -out:test.exe test.cs`
+* run: `mono --optimize=all test.exe`
 * version: mcs 4.6.2.0
 * time constraint: +5 sec
 * memory constraint: +512MB
@@ -104,7 +104,7 @@ apt-get install mono-mcs libmono-system-numerics4.0-cil
 
 # Node.js
 * compile: LINT check!
-* run: `node Main.js`
+* run: `node test.js`
 * version: v8.10.0
 * time constraint: x3+2 sec
 * memory constraint: x2MB
@@ -124,8 +124,8 @@ npm install file-system --save
 ```
 
 # PHP
-* compile: `php -l Main.php`
-* run: `php Main.php`
+* compile: `php -l test.php`
+* run: `php test.php`
 * version: 7.2.19
 * time constraint: +5 sec
 * memory constraint: +512MB
