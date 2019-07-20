@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 #include <unistd.h>
 #include <seccomp.h>
@@ -35,6 +36,21 @@ int main(int argc, char *argv[]) {
     FILE *fp_out = freopen("std.out", "w", stdout);
     FILE *fp_error = freopen("err.log", "a+", stderr);
 
+    char *command[argc];
+
+    if (argc == 1) {
+        perror("No command\n");
+        exit(EXIT_FAILURE);
+    }
+
+    /* copy command (array of pointers to string) */
+    for (int i = 1; i < argc; i++) {
+        command[i - 1] = malloc(strlen(argv[i]) + 1);
+        strcpy(command[i - 1], argv[i]);
+    }
+
+    command[argc - 1] = NULL;
+
     /* build rules for whitelist of system calls */
     for (int i = 0; i < size_of_whitelist_syscall; i++) {
         seccomp_rule_add(ctx, SCMP_ACT_ALLOW, whitelist_syscall[i], 0);
@@ -61,12 +77,15 @@ int main(int argc, char *argv[]) {
 
         seccomp_load(ctx);
 
-	execl("/usr/bin/java", "/usr/bin/java", "test/Test", NULL);
-	//execl("/usr/bin/mono", "/usr/bin/mono", "test/test.exe", NULL);
-	//execl("/usr/bin/python3", "python", "test/test.py", NULL);
-	//execl("test/testc.out", "test/test.out", NULL);
-	//execl("test/testcpp.out", "test/test.out", NULL);
-	//execl("/usr/bin/nodejs", "/usr/bin/nodejs", "test/test.js", NULL);
+        /*
+         * ./a.out /usr/bin/java test.Test
+         * ./a.out test/testc.out test/testc.out
+         * ./a.out test/testcpp.out test/testcpp.out
+         * ./a.out /usr/bin/python3 test/test.py
+         * ./a.out /usr/bin/nodejs test/test.js
+         * ./a.out /usr/bin/mono test/test.exe
+         */
+        execv(command[0], command);
 
         perror("failed to replace the process");
         exit(EXIT_FAILURE);
