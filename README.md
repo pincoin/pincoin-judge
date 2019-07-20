@@ -25,7 +25,7 @@ Supported languages
 ### npm
 ```
 npm init
-npm install file-system
+npm install file-system --save
 ```
 
 ### PIP3
