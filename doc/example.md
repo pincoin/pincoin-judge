@@ -43,7 +43,7 @@ int main() {
 
 # Java11 OpenJDK
 * compile: `javac -J-Xms1024m -J-Xmx1024m -J-Xss512m -encoding UTF-8 Main.java`
-* run: `java -Xms1024m -Xmx1024m -Xss512m -Dfile.encoding=UTF-8 Main`
+* run: `java -Xms1024m -Xmx1024m -Xss512m -Dfile.encoding=UTF-8 -Djava.security.manager -Djava.security.policy=java.policy Main`
 * version: openjdk 11.0.3
 * time constraint: x2+1 sec
 * memory constraint: x2+16MB
