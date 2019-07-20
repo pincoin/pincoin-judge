@@ -10,6 +10,10 @@ a, b = map(int, input().split())
 print(a+b)
 ```
 
+```
+apt-get install python3
+```
+
 # C11
 * compile: `gcc Main.c -o Mainc.out -O2 -Wall -lm -static -std=c11`
 * run: `./Mainc.out`
@@ -23,6 +27,10 @@ int main() {
     printf("%d\n",a+b);
     return 0;
 }
+```
+
+```
+apt-get install build-essential
 ```
 
 # C++17
@@ -39,6 +47,10 @@ int main() {
     cout << a+b << endl;
     return 0;
 }
+```
+
+```
+apt-get install build-essential
 ```
 
 # Java11 OpenJDK
@@ -59,6 +71,10 @@ public class Main{
         System.out.println(a + b);
     }
 }
+```
+
+```
+apt-get install openjdk-11-jdk
 ```
 
 # C#
@@ -82,6 +98,10 @@ public class Program {
 }
 ```
 
+```
+apt-get install mono-mcs libmono-system-numerics4.0-cil
+```
+
 # Node.js
 * compile: LINT check!
 * run: `node Main.js`
@@ -97,6 +117,12 @@ var b = parseInt(input[1]);
 console.log(a+b);
 ```
 
+```
+apt-get install nodejs npm
+npm init
+npm install file-system --save
+```
+
 # PHP
 * compile: `php -l Main.php`
 * run: `php Main.php`
@@ -109,4 +135,8 @@ console.log(a+b);
 fscanf(STDIN,"%d %d",$a,$b);
 fprintf(STDOUT,"%d",$a+$b);
 
+```
+
+```
+apt-get install php-cli
 ```

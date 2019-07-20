@@ -22,7 +22,8 @@
 
 #include "whitelist.h"
 
-int main(int argc, char *argv[]) {
+int
+main(int argc, char *argv[]) {
     pid_t cpid;
     int wstatus;
 
@@ -43,7 +44,15 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    /* copy command (array of pointers to string) */
+    /* copy command (array of pointers to string)
+     * argv[0]: a.out
+     * argv[1]: /usr/bin/java
+     * argv[2]: test.Test
+     * 
+     * command[0]: /usr/bin/java
+     * command[1]: test.Test
+     * command[2]: NULL
+     */
     for (int i = 1; i < argc; i++) {
         command[i - 1] = malloc(strlen(argv[i]) + 1);
         strcpy(command[i - 1], argv[i]);
@@ -124,6 +133,10 @@ int main(int argc, char *argv[]) {
         // 4. check disk space
 
         // 5. runtime error or match (maybe in Python)
+
+        for (int i = 0; i < argc; i++) {
+            free(command[i]);
+        }
 
         fflush(fp_out);
         fflush(fp_error);

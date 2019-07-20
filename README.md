@@ -1,11 +1,9 @@
 # thai-online-judge-backend
 
 # TODO
-
-1. fork
-2. ptrace
-3. seccomp
-4. chroot
+* chroot
+* ptrace option elaboration
+* seccomp option elaboration
 
 # Packages
 ## Ubuntu
@@ -14,19 +12,13 @@
 * python3-dev
 
 Supported languages
-* python3
-* openjdk-11-jdk
-* mono-mcs
-* libmono-system-numerics4.0-cil
-* nodejs
-* npm
-* php-cli
-
-### npm
-```
-npm init
-npm install file-system --save
-```
+* C
+* C++
+* Python
+* Java
+* C#
+* PHP
+* Node.js
 
 ### PIP3
 * Cython
