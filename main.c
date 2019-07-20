@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <seccomp.h>
 #include <sys/types.h>
+#include <sys/socket.h>
 #include <sys/wait.h>
 #include <sys/prctl.h>
 #include <sys/user.h>
@@ -38,6 +39,9 @@ int main(int argc, char *argv[]) {
     for (int i = 0; i < size_of_whitelist_syscall; i++) {
         seccomp_rule_add(ctx, SCMP_ACT_ALLOW, whitelist_syscall[i], 0);
     }
+
+    seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(socket), 1,
+            SCMP_A0(SCMP_CMP_EQ, AF_UNIX));
 
     cpid = fork();
 

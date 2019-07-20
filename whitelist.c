@@ -54,7 +54,6 @@ int whitelist_syscall[] = {
     SCMP_SYS(set_robust_list),
     SCMP_SYS(set_tid_address),
     SCMP_SYS(sigaltstack),
-    SCMP_SYS(socket),
     SCMP_SYS(stat),
     SCMP_SYS(statfs),
     SCMP_SYS(sysinfo),
