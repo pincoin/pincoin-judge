@@ -4,5 +4,6 @@
 static char **build_command(int argc, char **argv);
 static void build_seccomp_rules(scmp_filter_ctx context);
 static void run_program(scmp_filter_ctx context, char **command);
+static void wait_program(pid_t pid);
 
 #endif

@@ -26,9 +26,6 @@
 
 int main(int argc, char *argv[]) {
     pid_t cpid;
-    int wstatus;
-
-    struct user_regs_struct regs;
 
     struct timespec tstart={0, 0}, tend={0, 0};
 
@@ -65,24 +62,7 @@ int main(int argc, char *argv[]) {
     } else {                        /* Code executed by parent */
         clock_gettime(CLOCK_MONOTONIC, &tstart);
 
-        do {
-            if (waitpid(cpid, &wstatus, WUNTRACED | WCONTINUED) == -1) {
-                exit(EXIT_FAILURE);
-            }
-
-            #ifdef PTRACE
-                ptrace(PTRACE_SETOPTIONS, cpid, 0, PTRACE_O_TRACESECCOMP);
-                ptrace(PTRACE_GETREGS, cpid, NULL, &regs);
-                fprintf(stderr, "syscall(%lld)\n", REG(regs));
-                ptrace(PTRACE_SYSCALL, cpid, NULL, NULL);
-            #endif
-
-            if (WIFEXITED(wstatus)) {
-                fprintf(stderr, "exited, status=%d\n", WEXITSTATUS(wstatus));
-            } else if (WIFSIGNALED(wstatus)) {
-                fprintf(stderr, "killed by signal %d\n", WTERMSIG(wstatus));
-            }
-        } while (!WIFEXITED(wstatus) && !WIFSIGNALED(wstatus));
+        wait_program(cpid);
 
         clock_gettime(CLOCK_MONOTONIC, &tend);
 
@@ -148,13 +128,29 @@ static void run_program(scmp_filter_ctx context, char **command) {
 
     seccomp_load(context);
 
-    /*
-     * ./a.out /usr/bin/java test.Test
-     * ./a.out test/testc.out test/testc.out
-     * ./a.out test/testcpp.out test/testcpp.out
-     * ./a.out /usr/bin/python3 test/test.py
-     * ./a.out /usr/bin/nodejs test/test.js
-     * ./a.out /usr/bin/mono test/test.exe
-     */
     execv(command[0], command);
+}
+
+static void wait_program(pid_t pid) {
+    int wstatus;
+    struct user_regs_struct regs;
+
+    do {
+        if (waitpid(pid, &wstatus, WUNTRACED | WCONTINUED) == -1) {
+            exit(EXIT_FAILURE);
+        }
+
+        #ifdef PTRACE
+            ptrace(PTRACE_SETOPTIONS, pid, 0, PTRACE_O_TRACESECCOMP);
+            ptrace(PTRACE_GETREGS, pid, NULL, &regs);
+            fprintf(stderr, "syscall(%lld)\n", REG(regs));
+            ptrace(PTRACE_SYSCALL, pid, NULL, NULL);
+        #endif
+
+        if (WIFEXITED(wstatus)) {
+            fprintf(stderr, "exited, status=%d\n", WEXITSTATUS(wstatus));
+        } else if (WIFSIGNALED(wstatus)) {
+            fprintf(stderr, "killed by signal %d\n", WTERMSIG(wstatus));
+        }
+    } while (!WIFEXITED(wstatus) && !WIFSIGNALED(wstatus));
 }
