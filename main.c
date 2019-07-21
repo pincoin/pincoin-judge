@@ -41,7 +41,8 @@ int main(int argc, char *argv[]) {
     char **command = malloc(sizeof(char *) * argc);
 
     if (argc == 1) {
-        usage(argv[0]);
+        fprintf(stderr, "%s: filename args\n", argv[0]);
+        fprintf(stderr, "Run program\n");
         exit(EXIT_FAILURE);
     }
 
@@ -57,24 +58,7 @@ int main(int argc, char *argv[]) {
     }
 
     if (cpid == 0) {                /* Code executed by child */
-        #ifdef PTRACE
-            ptrace(PTRACE_TRACEME, 0, 0, 0);
-        #endif
-
-        prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0);
-        prctl(PR_SET_DUMPABLE, 0);
-
-        seccomp_load(ctx);
-
-        /*
-         * ./a.out /usr/bin/java test.Test
-         * ./a.out test/testc.out test/testc.out
-         * ./a.out test/testcpp.out test/testcpp.out
-         * ./a.out /usr/bin/python3 test/test.py
-         * ./a.out /usr/bin/nodejs test/test.js
-         * ./a.out /usr/bin/mono test/test.exe
-         */
-        execv(command[0], command);
+        run_program(ctx, command);
 
         fprintf(stderr, "failed to replace the process");
         exit(EXIT_FAILURE);
@@ -131,13 +115,6 @@ int main(int argc, char *argv[]) {
     return 0;
 }
 
-static int usage(char *me)
-{
-    fprintf(stderr, "%s: filename args\n", me);
-    fprintf(stderr, "Run program\n");
-    return 0;
-}
-
 static char **build_command(int argc, char **argv) {
     char **command = malloc(sizeof(char *) * argc);
 
@@ -159,4 +136,25 @@ static void build_seccomp_rules(scmp_filter_ctx context) {
     /* socket(AF_UNIX, ... */
     seccomp_rule_add(context, SCMP_ACT_ALLOW, SCMP_SYS(socket), 1,
             SCMP_A0(SCMP_CMP_EQ, AF_UNIX));
+}
+
+static void run_program(scmp_filter_ctx context, char **command) {
+    #ifdef PTRACE
+        ptrace(PTRACE_TRACEME, 0, 0, 0);
+    #endif
+
+    prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0);
+    prctl(PR_SET_DUMPABLE, 0);
+
+    seccomp_load(context);
+
+    /*
+     * ./a.out /usr/bin/java test.Test
+     * ./a.out test/testc.out test/testc.out
+     * ./a.out test/testcpp.out test/testcpp.out
+     * ./a.out /usr/bin/python3 test/test.py
+     * ./a.out /usr/bin/nodejs test/test.js
+     * ./a.out /usr/bin/mono test/test.exe
+     */
+    execv(command[0], command);
 }
