@@ -29,8 +29,6 @@ int main(int argc, char *argv[]) {
 
     struct timespec tstart={0, 0}, tend={0, 0};
 
-    scmp_filter_ctx ctx = seccomp_init(SCMP_ACT_KILL);
-
     FILE *fp_in = freopen("std.in", "r", stdin);
     FILE *fp_out = freopen("std.out", "w", stdout);
     FILE *fp_error = freopen("err.log", "a+", stderr);
@@ -45,7 +43,9 @@ int main(int argc, char *argv[]) {
 
     command = build_command(argc, argv);
 
-    build_seccomp_rules(ctx);
+    seccomp_context = seccomp_init(SCMP_ACT_KILL);
+
+    build_seccomp_rules();
 
     cpid = fork();
 
@@ -55,7 +55,7 @@ int main(int argc, char *argv[]) {
     }
 
     if (cpid == 0) {                /* Code executed by child */
-        run_program(ctx, command);
+        run_program(command);
 
         fprintf(stderr, "failed to replace the process");
         exit(EXIT_FAILURE);
@@ -79,6 +79,8 @@ int main(int argc, char *argv[]) {
         // 5. runtime error or match (maybe in Python)
 
         /* clean up tasks */
+        seccomp_release(seccomp_context);
+
         for (int i = 0; i < argc; i++) {
             free(command[i]);
         }
@@ -107,18 +109,18 @@ static char **build_command(int argc, char **argv) {
     return command;
 }
 
-static void build_seccomp_rules(scmp_filter_ctx context) {
+static void build_seccomp_rules() {
     /* build rules for whitelist of system calls */
     for (int i = 0; i < size_of_whitelist_syscall; i++) {
-        seccomp_rule_add(context, SCMP_ACT_ALLOW, whitelist_syscall[i], 0);
+        seccomp_rule_add(seccomp_context, SCMP_ACT_ALLOW, whitelist_syscall[i], 0);
     }
 
     /* socket(AF_UNIX, ... */
-    seccomp_rule_add(context, SCMP_ACT_ALLOW, SCMP_SYS(socket), 1,
+    seccomp_rule_add(seccomp_context, SCMP_ACT_ALLOW, SCMP_SYS(socket), 1,
             SCMP_A0(SCMP_CMP_EQ, AF_UNIX));
 }
 
-static void run_program(scmp_filter_ctx context, char **command) {
+static void run_program(char **command) {
     #ifdef PTRACE
         ptrace(PTRACE_TRACEME, 0, 0, 0);
     #endif
@@ -126,7 +128,7 @@ static void run_program(scmp_filter_ctx context, char **command) {
     prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0);
     prctl(PR_SET_DUMPABLE, 0);
 
-    seccomp_load(context);
+    seccomp_load(seccomp_context);
 
     execv(command[0], command);
 }
