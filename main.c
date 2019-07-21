@@ -12,7 +12,7 @@
 
 #include "main.h"
 
-#ifdef DEBUG_PTRACE
+#ifdef ENABLE_PTRACE
     #include <sys/ptrace.h>
 
     #if __WORDSIZE == 64
@@ -43,7 +43,7 @@ int main(int argc, char *argv[]) {
 
     command = build_command(argc, argv);
 
-    #ifdef DEBUG_SECCOMP
+    #ifdef ENABLE_SECCOMP
         seccomp_context = seccomp_init(SCMP_ACT_KILL);
         build_seccomp_rules();
     #endif
@@ -80,7 +80,7 @@ int main(int argc, char *argv[]) {
         // 5. runtime error or match (maybe in Python)
 
         /* clean up tasks */
-        #ifdef DEBUG_SECCOMP
+        #ifdef ENABLE_SECCOMP
             seccomp_release(seccomp_context);
         #endif
 
@@ -112,7 +112,7 @@ static char **build_command(int argc, char **argv) {
     return command;
 }
 
-#ifdef DEBUG_SECCOMP
+#ifdef ENABLE_SECCOMP
 static void build_seccomp_rules() {
     /* build rules for whitelist of system calls */
     for (int i = 0; i < size_of_whitelist_syscall; i++) {
@@ -126,13 +126,13 @@ static void build_seccomp_rules() {
 #endif
 
 static void run_program(char **command) {
-    #ifdef DEBUG_PTRACE
+    #ifdef ENABLE_PTRACE
         ptrace(PTRACE_TRACEME, 0, 0, 0);
         prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0);
         prctl(PR_SET_DUMPABLE, 0);
     #endif
 
-    #ifdef DEBUG_SECCOMP
+    #ifdef ENABLE_SECCOMP
         seccomp_load(seccomp_context);
     #endif
 
@@ -148,7 +148,7 @@ static void wait_program(pid_t pid) {
             exit(EXIT_FAILURE);
         }
 
-        #ifdef DEBUG_PTRACE
+        #ifdef ENABLE_PTRACE
             ptrace(PTRACE_SETOPTIONS, pid, 0, PTRACE_O_TRACESECCOMP);
             ptrace(PTRACE_GETREGS, pid, NULL, &regs);
             fprintf(stderr, "syscall(%lld)\n", REG(regs));
