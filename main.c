@@ -12,7 +12,7 @@
 
 #include "main.h"
 
-#ifdef PTRACE
+#ifdef DEBUG_PTRACE
     #include <sys/ptrace.h>
 
     #if __WORDSIZE == 64
@@ -121,7 +121,7 @@ static void build_seccomp_rules() {
 }
 
 static void run_program(char **command) {
-    #ifdef PTRACE
+    #ifdef DEBUG_PTRACE
         ptrace(PTRACE_TRACEME, 0, 0, 0);
     #endif
 
@@ -142,7 +142,7 @@ static void wait_program(pid_t pid) {
             exit(EXIT_FAILURE);
         }
 
-        #ifdef PTRACE
+        #ifdef DEBUG_PTRACE
             ptrace(PTRACE_SETOPTIONS, pid, 0, PTRACE_O_TRACESECCOMP);
             ptrace(PTRACE_GETREGS, pid, NULL, &regs);
             fprintf(stderr, "syscall(%lld)\n", REG(regs));
