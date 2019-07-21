@@ -43,9 +43,10 @@ int main(int argc, char *argv[]) {
 
     command = build_command(argc, argv);
 
-    seccomp_context = seccomp_init(SCMP_ACT_KILL);
-
-    build_seccomp_rules();
+    #ifdef DEBUG_SECCOMP
+        seccomp_context = seccomp_init(SCMP_ACT_KILL);
+        build_seccomp_rules();
+    #endif
 
     cpid = fork();
 
@@ -79,7 +80,9 @@ int main(int argc, char *argv[]) {
         // 5. runtime error or match (maybe in Python)
 
         /* clean up tasks */
-        seccomp_release(seccomp_context);
+        #ifdef DEBUG_SECCOMP
+            seccomp_release(seccomp_context);
+        #endif
 
         for (int i = 0; i < argc; i++) {
             free(command[i]);
@@ -109,6 +112,7 @@ static char **build_command(int argc, char **argv) {
     return command;
 }
 
+#ifdef DEBUG_SECCOMP
 static void build_seccomp_rules() {
     /* build rules for whitelist of system calls */
     for (int i = 0; i < size_of_whitelist_syscall; i++) {
@@ -119,16 +123,18 @@ static void build_seccomp_rules() {
     seccomp_rule_add(seccomp_context, SCMP_ACT_ALLOW, SCMP_SYS(socket), 1,
             SCMP_A0(SCMP_CMP_EQ, AF_UNIX));
 }
+#endif
 
 static void run_program(char **command) {
     #ifdef DEBUG_PTRACE
         ptrace(PTRACE_TRACEME, 0, 0, 0);
+        prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0);
+        prctl(PR_SET_DUMPABLE, 0);
     #endif
 
-    prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0);
-    prctl(PR_SET_DUMPABLE, 0);
-
-    seccomp_load(seccomp_context);
+    #ifdef DEBUG_SECCOMP
+        seccomp_load(seccomp_context);
+    #endif
 
     execv(command[0], command);
 }
