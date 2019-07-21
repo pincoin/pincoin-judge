@@ -10,6 +10,8 @@
 #include <sys/prctl.h>
 #include <sys/user.h>
 
+#include "main.h"
+
 #ifdef PTRACE
     #include <sys/ptrace.h>
 
@@ -22,8 +24,7 @@
 
 #include "whitelist.h"
 
-int
-main(int argc, char *argv[]) {
+int main(int argc, char *argv[]) {
     pid_t cpid;
     int wstatus;
 
@@ -37,28 +38,14 @@ main(int argc, char *argv[]) {
     FILE *fp_out = freopen("std.out", "w", stdout);
     FILE *fp_error = freopen("err.log", "a+", stderr);
 
-    char *command[argc];
+    char **command = malloc(sizeof(char *) * argc);
 
     if (argc == 1) {
-        perror("No command\n");
+        usage(argv[0]);
         exit(EXIT_FAILURE);
     }
 
-    /* copy command (array of pointers to string)
-     * argv[0]: a.out
-     * argv[1]: /usr/bin/java
-     * argv[2]: test.Test
-     * 
-     * command[0]: /usr/bin/java
-     * command[1]: test.Test
-     * command[2]: NULL
-     */
-    for (int i = 1; i < argc; i++) {
-        command[i - 1] = malloc(strlen(argv[i]) + 1);
-        strcpy(command[i - 1], argv[i]);
-    }
-
-    command[argc - 1] = NULL;
+    command = build_command(argc, argv);
 
     /* build rules for whitelist of system calls */
     for (int i = 0; i < size_of_whitelist_syscall; i++) {
@@ -72,7 +59,7 @@ main(int argc, char *argv[]) {
     cpid = fork();
 
     if (cpid == -1) {
-        perror("failed to fork\n");
+        fprintf(stderr, "failed to fork\n");
         exit(EXIT_FAILURE);
     }
 
@@ -96,7 +83,7 @@ main(int argc, char *argv[]) {
          */
         execv(command[0], command);
 
-        perror("failed to replace the process");
+        fprintf(stderr, "failed to replace the process");
         exit(EXIT_FAILURE);
     } else {                        /* Code executed by parent */
         clock_gettime(CLOCK_MONOTONIC, &tstart);
@@ -148,5 +135,24 @@ main(int argc, char *argv[]) {
         exit(EXIT_SUCCESS);
     }
     return 0;
+}
+
+static int usage(char *me)
+{
+    fprintf(stderr, "%s: filename args\n", me);
+    fprintf(stderr, "Run program\n");
+    return 0;
+}
+
+static char ** build_command(int argc, char **argv) {
+    char **command = malloc(sizeof(char *) * argc);
+
+    /* copy argv to command which is NULL-terminated */
+    for (int i = 0; i < argc - 1; i++) {
+        command[i] = strdup(argv[i + 1]);
+    }
+    command[argc - 1] = NULL;
+
+    return command;
 }
 
