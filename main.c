@@ -47,14 +47,7 @@ int main(int argc, char *argv[]) {
 
     command = build_command(argc, argv);
 
-    /* build rules for whitelist of system calls */
-    for (int i = 0; i < size_of_whitelist_syscall; i++) {
-        seccomp_rule_add(ctx, SCMP_ACT_ALLOW, whitelist_syscall[i], 0);
-    }
-
-    /* socket(AF_UNIX, ... */
-    seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(socket), 1,
-            SCMP_A0(SCMP_CMP_EQ, AF_UNIX));
+    build_seccomp_rules(ctx);
 
     cpid = fork();
 
@@ -121,6 +114,7 @@ int main(int argc, char *argv[]) {
 
         // 5. runtime error or match (maybe in Python)
 
+        /* clean up tasks */
         for (int i = 0; i < argc; i++) {
             free(command[i]);
         }
@@ -144,7 +138,7 @@ static int usage(char *me)
     return 0;
 }
 
-static char ** build_command(int argc, char **argv) {
+static char **build_command(int argc, char **argv) {
     char **command = malloc(sizeof(char *) * argc);
 
     /* copy argv to command which is NULL-terminated */
@@ -156,3 +150,13 @@ static char ** build_command(int argc, char **argv) {
     return command;
 }
 
+static void build_seccomp_rules(scmp_filter_ctx context) {
+    /* build rules for whitelist of system calls */
+    for (int i = 0; i < size_of_whitelist_syscall; i++) {
+        seccomp_rule_add(context, SCMP_ACT_ALLOW, whitelist_syscall[i], 0);
+    }
+
+    /* socket(AF_UNIX, ... */
+    seccomp_rule_add(context, SCMP_ACT_ALLOW, SCMP_SYS(socket), 1,
+            SCMP_A0(SCMP_CMP_EQ, AF_UNIX));
+}
