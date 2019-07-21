@@ -1,17 +1,5 @@
-# thai-online-judge-backend
-
-# TODO
-* chroot
-* ptrace option elaboration
-* seccomp option elaboration
-
-# Packages
-## Ubuntu
-* build-essential
-* libseccomp-dev
-* python3-dev
-
-Supported languages
+# Under development
+## Supported languages
 * C
 * C++
 * Python
@@ -19,6 +7,21 @@ Supported languages
 * C#
 * PHP
 * Node.js
+
+# TODO
+* chroot
+* ptrace option elaboration
+* seccomp option elaboration
+* python wrapper
+* flask integration for REST-API
+* security check
+
+# Packages
+
+## Ubuntu
+* build-essential
+* libseccomp-dev
+* python3-dev
 
 ### PIP3
 * Cython
