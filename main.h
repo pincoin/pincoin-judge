@@ -13,4 +13,8 @@ static char **build_command(int argc, char **argv);
 static void run_program(char **command);
 static void wait_program(pid_t pid);
 
+#ifdef TRACE_MEMORY
+static int trace_memory(char *pid_status_file_path);
+#endif
+
 #endif
