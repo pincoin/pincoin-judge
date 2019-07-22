@@ -1,7 +1,7 @@
 #ifndef __main_h__
 #define __main_h__
 
-#ifdef ENABLE_SECCOMP
+#ifdef USE_SECCOMP
 #include <seccomp.h>
 
 static scmp_filter_ctx seccomp_context;
