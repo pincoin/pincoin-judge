@@ -4,6 +4,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <seccomp.h>
+#include <errno.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/wait.h>
@@ -144,7 +145,18 @@ static void wait_program(pid_t pid) {
     struct user_regs_struct regs;
 
     do {
-        if (waitpid(pid, &wstatus, WUNTRACED | WCONTINUED) == -1) {
+        /* Loop that restarts wait if interrupted by a signal
+         * 
+         * wait: parent process is blocked until the child finishes
+         *
+         * Bitwise options
+         * WNOHANG: `wait` returns immediately if the status of a child is not available.
+         * WUNTRACED: `wait` also returns if a child has stopped (but not traced via ptrace).
+         * WCONTINUED: `wait` also returns if a stopped child has been resumed by delivery of SIGCONT.
+         * 
+         * EINTR: function was interrupted by a signal
+         */
+        if (waitpid(pid, &wstatus, 0) == -1 && errno != EINTR) {
             exit(EXIT_FAILURE);
         }
 
@@ -159,6 +171,10 @@ static void wait_program(pid_t pid) {
             fprintf(stderr, "exited, status=%d\n", WEXITSTATUS(wstatus));
         } else if (WIFSIGNALED(wstatus)) {
             fprintf(stderr, "killed by signal %d\n", WTERMSIG(wstatus));
-        }
+        } /* else if (WIFSTOPPED(wstatus)) {
+            fprintf(stderr, "stopped by signal %d\n", WSTOPSIG(wstatus));
+        } else if (WIFCONTINUED(wstatus)) {
+            fprintf(stderr, "continued\n");
+        } */
     } while (!WIFEXITED(wstatus) && !WIFSIGNALED(wstatus));
 }
