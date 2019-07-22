@@ -40,6 +40,8 @@ int main(int argc, char *argv[]) {
 
     char **command = malloc(sizeof(char *) * argc);
 
+    struct sigaction sig_chld_act;
+
     if (argc == 1) {
         fprintf(stderr, "%s: filename args\n", argv[0]);
         fprintf(stderr, "Run program\n");
@@ -52,6 +54,15 @@ int main(int argc, char *argv[]) {
         seccomp_context = seccomp_init(SCMP_ACT_KILL);
         build_seccomp_rules();
     #endif
+
+    sig_chld_act.sa_handler = chld_sig_handler;
+    sigemptyset(&sig_chld_act.sa_mask);
+    sig_chld_act.sa_flags = 0;
+
+    if (sigaction(SIGCHLD, &sig_chld_act, 0) == -1) {
+        fprintf(stderr, "sigaction failed\n");
+        exit(EXIT_FAILURE);
+    }
 
     cpid = fork();
 
@@ -68,7 +79,7 @@ int main(int argc, char *argv[]) {
     } else {                        /* Code executed by parent */
         clock_gettime(CLOCK_MONOTONIC, &tstart);
 
-        wait_program(cpid);
+        watch_program(cpid);
 
         clock_gettime(CLOCK_MONOTONIC, &tend);
 
@@ -103,6 +114,37 @@ int main(int argc, char *argv[]) {
         exit(EXIT_SUCCESS);
     }
     return 0;
+}
+
+static void chld_sig_handler(int signo) {
+    int wstatus;
+
+    do {
+        /* loop that restarts wait if interrupted by a signal
+         * 
+         * parent process is blocked until the child finishes by calling `wait`.
+         *
+         * Bitwise options
+         * WNOHANG: `wait` returns immediately if the status of a child is not available.
+         * WUNTRACED: `wait` also returns if a child has stopped (but not traced via ptrace).
+         * WCONTINUED: `wait` also returns if a stopped child has been resumed by delivery of SIGCONT.
+         * 
+         * EINTR: function was interrupted by a signal
+         */
+        if (waitpid(-1, &wstatus, 0) == -1 && errno != EINTR) {
+            exit(EXIT_FAILURE);
+        }
+
+        if (WIFEXITED(wstatus)) {
+            fprintf(stderr, "exited, status=%d\n", WEXITSTATUS(wstatus));
+        } else if (WIFSIGNALED(wstatus)) {
+            fprintf(stderr, "killed by signal %d\n", WTERMSIG(wstatus));
+        } /* else if (WIFSTOPPED(wstatus)) {
+            fprintf(stderr, "stopped by signal %d\n", WSTOPSIG(wstatus));
+        } else if (WIFCONTINUED(wstatus)) {
+            fprintf(stderr, "continued\n");
+        } */
+    } while (!WIFEXITED(wstatus) && !WIFSIGNALED(wstatus));
 }
 
 static char **build_command(int argc, char **argv) {
@@ -144,8 +186,8 @@ static void run_program(char **command) {
     execv(command[0], command);
 }
 
-static void wait_program(pid_t pid) {
-    int wstatus;
+static void watch_program(pid_t pid) {
+    int dead;
 
     #ifdef USE_PTRACE
         struct user_regs_struct regs;
@@ -153,26 +195,9 @@ static void wait_program(pid_t pid) {
 
     #ifdef TRACE_MEMORY
         char pid_status_file_path[PATH_MAX];
-        snprintf(pid_status_file_path, PATH_MAX, "/proc/%d/status", pid);
-        fprintf(stderr, "%s\n", pid_status_file_path);
     #endif
 
     do {
-        /* loop that restarts wait if interrupted by a signal
-         * 
-         * parent process is blocked until the child finishes by calling `wait`.
-         *
-         * Bitwise options
-         * WNOHANG: `wait` returns immediately if the status of a child is not available.
-         * WUNTRACED: `wait` also returns if a child has stopped (but not traced via ptrace).
-         * WCONTINUED: `wait` also returns if a stopped child has been resumed by delivery of SIGCONT.
-         * 
-         * EINTR: function was interrupted by a signal
-         */
-        if (waitpid(pid, &wstatus, 0) == -1 && errno != EINTR) {
-            exit(EXIT_FAILURE);
-        }
-
         #ifdef USE_PTRACE
             ptrace(PTRACE_SETOPTIONS, pid, 0, PTRACE_O_TRACESECCOMP);
             ptrace(PTRACE_GETREGS, pid, NULL, &regs);
@@ -181,19 +206,12 @@ static void wait_program(pid_t pid) {
         #endif
 
         #ifdef TRACE_MEMORY
+            snprintf(pid_status_file_path, PATH_MAX, "/proc/%d/status", pid);
             trace_memory(pid_status_file_path);
         #endif
 
-        if (WIFEXITED(wstatus)) {
-            fprintf(stderr, "exited, status=%d\n", WEXITSTATUS(wstatus));
-        } else if (WIFSIGNALED(wstatus)) {
-            fprintf(stderr, "killed by signal %d\n", WTERMSIG(wstatus));
-        } /* else if (WIFSTOPPED(wstatus)) {
-            fprintf(stderr, "stopped by signal %d\n", WSTOPSIG(wstatus));
-        } else if (WIFCONTINUED(wstatus)) {
-            fprintf(stderr, "continued\n");
-        } */
-    } while (!WIFEXITED(wstatus) && !WIFSIGNALED(wstatus));
+        dead = kill(pid, 0);
+    } while (!dead);
 }
 
 #ifdef TRACE_MEMORY
