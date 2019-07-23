@@ -109,9 +109,7 @@ int main(int argc, char *argv[]) {
             fprintf(stderr, "syscall(%lld)\n", regs.orig_rax);
 
             /* 4. check wait status */
-            if (wstatus>>8 == (SIGTRAP | (PTRACE_EVENT_SECCOMP<<8))) {
-                fprintf(stderr, "killed by syscall violation\n");
-            } else if (WIFEXITED(wstatus)) {
+            if (WIFEXITED(wstatus)) {
                 fprintf(stderr, "exited with status %d\n", WEXITSTATUS(wstatus));
             } else if (WIFSIGNALED(wstatus)) {
                 fprintf(stderr, "killed by signal %d\n", WTERMSIG(wstatus));
