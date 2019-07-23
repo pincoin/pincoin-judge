@@ -88,7 +88,11 @@ int main(int argc, char *argv[]) {
     } else {
         fprintf(stderr, "parent: %d\n", cpid);
 
-        ptrace(PTRACE_SETOPTIONS, cpid, 0, PTRACE_O_TRACESYSGOOD | PTRACE_O_TRACESECCOMP);
+        /* NOTE
+         * PTRACE_0_TRACESECCOMP: stop the tracee when a SECCOMP_RET_TRACE rule is triggered
+         * PTRACE_O_TRACESYSGOOD: set bit 7 in the signal number (SIGTRAP|0x80) when delivering system call traps
+         */
+        ptrace(PTRACE_SETOPTIONS, cpid, 0, PTRACE_O_TRACESECCOMP);
 
         do {
             /* 1. restart the stopped tracee childe */
@@ -100,20 +104,18 @@ int main(int argc, char *argv[]) {
                 exit(EXIT_FAILURE);
             }
 
-            /* 3. check wait status */
-            if (WIFEXITED(wstatus)) {
-                fprintf(stderr, "exited with status %d\n", WEXITSTATUS(wstatus));
-            } else if (WIFSIGNALED(wstatus)) {
-                if (WTERMSIG(wstatus) == 31) {
-                    fprintf(stderr, "killed by syscall violation\n");
-                } else {
-                    fprintf(stderr, "killed by signal %d\n", WTERMSIG(wstatus));
-                }
-            }
-
-            /* 4. retrieve syscall info of child */
+            /* 3. retrieve syscall info of child */
             ptrace(PTRACE_GETREGS, cpid, NULL, &regs);
             fprintf(stderr, "syscall(%lld)\n", regs.orig_rax);
+
+            /* 4. check wait status */
+            if (wstatus>>8 == (SIGTRAP | (PTRACE_EVENT_SECCOMP<<8))) {
+                fprintf(stderr, "killed by syscall violation\n");
+            } else if (WIFEXITED(wstatus)) {
+                fprintf(stderr, "exited with status %d\n", WEXITSTATUS(wstatus));
+            } else if (WIFSIGNALED(wstatus)) {
+                fprintf(stderr, "killed by signal %d\n", WTERMSIG(wstatus));
+            }
         } while (!WIFEXITED(wstatus) && !WIFSIGNALED(wstatus));
 
         /* clean up */
