@@ -115,6 +115,8 @@ static void sig_chld(int dummy) {
 
     (void) dummy;
 
+    printf("signal handler\n");
+
     pid = waitpid(-1, &status, WNOHANG);
     if (pid < 0) {
         fprintf(stderr, "waitpid failed\n");

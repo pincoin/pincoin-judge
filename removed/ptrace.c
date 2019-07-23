@@ -32,8 +32,6 @@ int main(int argc, char *argv[]) {
     if (cpid == 0) {                /* Code executed by child */
         printf("child %d\n", cpid);
 
-        sleep(1);
-
         #ifdef PTRACE
             ptrace(PTRACE_TRACEME, 0, 0, 0);
         #endif
