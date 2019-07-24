@@ -105,14 +105,16 @@ int main(int argc, char *argv[]) {
                 if (stop == 1) {
                     fprintf(stderr, "syscall(%ld)\n", orig_rax);
 
+                    /* NOTE: MUST read general-purpose registers */
                     ptrace(PTRACE_GETREGS, pid, NULL, &regs);
 
                     stop = 0;
                 } else {
                     /* NOTE
                      * - syscall result value is in %RAX
+                     * - MUST pop even if RAX is not used.
                      */
-                    rax  = ptrace(PTRACE_PEEKUSER, pid, 8 * RAX, NULL); /* MUST pop even if RAX is not used. */
+                    rax  = ptrace(PTRACE_PEEKUSER, pid, 8 * RAX, NULL);
                     /* fprintf(stderr, " return with %ld\n", rax); */
 
                     stop = 1;
