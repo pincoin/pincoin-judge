@@ -3,6 +3,8 @@
 #include <string.h>
 #include <unistd.h>
 #include <seccomp.h>
+#include <signal.h>
+#include <errno.h>
 
 #include <sys/wait.h>
 #include <sys/ptrace.h>
@@ -22,7 +24,9 @@ int main(int argc, char *argv[]) {
 
     char **args = malloc(sizeof(char *) * argc);
 
+#ifdef USE_PTRACE
     struct user_regs_struct regs;
+#endif
 
     fprintf(stderr, "online judge runner\n");
 
@@ -72,7 +76,9 @@ int main(int argc, char *argv[]) {
         prctl(PR_SET_DUMPABLE, 0);
 
         /* 3. use ptrace */
-        ptrace(PTRACE_TRACEME, 0, 0, 0); /* enter ptrace-stop */
+#ifdef USE_PTRACE
+        ptrace(PTRACE_TRACEME, 0, 0, 0);
+#endif
 
         /* 4. use seccomp */
         seccomp_load(seccomp_context);
@@ -92,29 +98,43 @@ int main(int argc, char *argv[]) {
          * PTRACE_0_TRACESECCOMP: stop the tracee when a SECCOMP_RET_TRACE rule is triggered
          * PTRACE_O_TRACESYSGOOD: set bit 7 in the signal number (SIGTRAP|0x80) when delivering system call traps
          */
+#ifdef USE_PTRACE
         ptrace(PTRACE_SETOPTIONS, cpid, 0, PTRACE_O_TRACESECCOMP);
+#endif
 
-        do {
+        while (1) {
             /* 1. restart the stopped tracee childe */
+#ifdef USE_PTRACE
             ptrace(PTRACE_SYSCALL, cpid, 0, 0);
+#endif
 
             /* 2. waitpid */
-            if (waitpid(cpid, &wstatus, 0) == -1) {
+            /* `wait` has to be blocked for ptrace */
+            if (waitpid(cpid, &wstatus,
+#ifdef USE_PTRACE
+                        0
+#else
+                        WNOHANG
+#endif
+                       ) == -1) {
                 fprintf(stderr, "failed to wait child termination\n");
                 exit(EXIT_FAILURE);
             }
 
             /* 3. retrieve syscall info of child */
+#ifdef USE_PTRACE
             ptrace(PTRACE_GETREGS, cpid, NULL, &regs);
             fprintf(stderr, "syscall(%lld)\n", regs.orig_rax);
+#endif
 
             /* 4. check wait status */
-            if (WIFEXITED(wstatus)) {
-                fprintf(stderr, "exited with status %d\n", WEXITSTATUS(wstatus));
-            } else if (WIFSIGNALED(wstatus)) {
+            if (WIFSIGNALED(wstatus)) {
                 fprintf(stderr, "killed by signal %d\n", WTERMSIG(wstatus));
+            } else if (WIFEXITED(wstatus)) {
+                fprintf(stderr, "exited with status %d\n", WEXITSTATUS(wstatus));
+                break;
             }
-        } while (!WIFEXITED(wstatus) && !WIFSIGNALED(wstatus));
+        }
 
         /* clean up */
         seccomp_release(seccomp_context);

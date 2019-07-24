@@ -60,7 +60,9 @@ int whitelist_syscall[] = {
     SCMP_SYS(tgkill),
     SCMP_SYS(uname),
     SCMP_SYS(unlink),
-    SCMP_SYS(write)
+    SCMP_SYS(write),
+
+    //SCMP_SYS(fadvise64),
 };
 
 int size_of_whitelist_syscall = sizeof(whitelist_syscall) / sizeof(int);
