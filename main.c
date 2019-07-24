@@ -171,33 +171,23 @@ static void watch_program(pid_t pid) {
 }
 
 static int get_memory_usage(char *pid_stauts_file_path) {
-    char *line;
-    char *vmsize;
-    char *vmpeak;
-    char *vmrss;
-    char *vmhwm;
-    char *vmdata;
-    char *vmstk;
+    char *line = malloc(128);
 
-    size_t len;
+    char *vmsize = NULL;
+    char *vmpeak = NULL;
+    char *vmdata = NULL;
+    char *vmstk = NULL;
+
+    size_t len = 128;
 
     FILE *f;
-
-    vmsize = NULL;
-    vmpeak = NULL;
-    vmrss = NULL;
-    vmhwm = NULL;
-    vmdata = NULL;
-    vmstk = NULL;
-    line = malloc(128);
-    len = 128;
 
     f = fopen(pid_stauts_file_path, "r");
 
     if (!f) return 1;
 
     /* Read memory size data from /proc/{pid}/status */
-    while (!vmsize || !vmpeak || !vmrss || !vmhwm || !vmdata || !vmstk) {
+    while (!vmsize || !vmpeak || !vmdata || !vmstk) {
         if (getline(&line, &len, f) == -1) {
             /* Some of the information isn't there, die */
             return 1;
@@ -209,12 +199,6 @@ static int get_memory_usage(char *pid_stauts_file_path) {
         } else if (!strncmp(line, "VmSize:", 7)) {
             /* Find VmSize */
             vmsize = strdup(&line[7]);
-        } else if (!strncmp(line, "VmRSS:", 6)) {
-            /* Find VmRSS */
-            vmrss = strdup(&line[7]);
-        } else if (!strncmp(line, "VmHWM:", 6)) {
-            /* Find VmHWM */
-            vmhwm = strdup(&line[7]);
         } else if (!strncmp(line, "VmData:", 7)) {
             /* Find VmData */
             vmdata = strdup(&line[7]);
@@ -233,22 +217,16 @@ static int get_memory_usage(char *pid_stauts_file_path) {
     vmsize[len - 4] = 0;
     len = strlen(vmpeak);
     vmpeak[len - 4] = 0;
-    len = strlen(vmrss);
-    vmrss[len - 4] = 0;
-    len = strlen(vmhwm);
-    vmhwm[len - 4] = 0;
     len = strlen(vmdata);
     vmdata[len - 4] = 0;
     len = strlen(vmstk);
     vmstk[len - 4] = 0;
 
     /* Output results to stderr */
-    fprintf(stderr, "%s\t%s\t%s\t%s\t%s\t%s\n", vmsize, vmpeak, vmrss, vmhwm, vmdata, vmstk);
+    fprintf(stderr, "%s\t%s\t%s\t%s\n", vmsize, vmpeak, vmdata, vmstk);
 
     free(vmpeak);
     free(vmsize);
-    free(vmrss);
-    free(vmhwm);
     free(vmdata);
     free(vmstk);
 
