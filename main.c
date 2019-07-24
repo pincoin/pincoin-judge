@@ -97,7 +97,14 @@ int main(int argc, char *argv[]) {
             /* NOTE
              * - process has USER, DATA, TEXT area
              * - accumulator register: %AX(16bit), %EAX(32bit), %RAX(64bit)
-             * - ORIG_RAX has syscall number
+             * - RAX is used to save syscall number and return value.
+             * - RAX is overwritten by return value, so syscall number is saved in ORIG_RAX
+             * - ORIG_RAX is set to -1 so that syscall restart logic doesn't trigger.
+             *
+             * 1. Wait for the process to enter the next system call.
+             * 2. Print a representation of the system call.
+             * 3. Allow the system call to execute and wait for the return.
+             * 4. Print the system call return value.
              */
             orig_rax = ptrace(PTRACE_PEEKUSER, pid, 8 * ORIG_RAX, NULL);
 
@@ -111,7 +118,6 @@ int main(int argc, char *argv[]) {
                     stop = 0;
                 } else {
                     /* NOTE
-                     * - syscall result value is in %RAX
                      * - MUST pop even if RAX is not used.
                      */
                     rax  = ptrace(PTRACE_PEEKUSER, pid, 8 * RAX, NULL);
@@ -121,7 +127,7 @@ int main(int argc, char *argv[]) {
                 }
             }
 
-            /* 4. invoke system call to resume child tracee */
+            /* 4. enter the next system call to resume child tracee */
             ptrace(PTRACE_SYSCALL, pid, NULL, NULL);
         }
     }
