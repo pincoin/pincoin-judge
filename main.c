@@ -100,6 +100,8 @@ int main(int argc, char *argv[]) {
              * - RAX is used to save syscall number and return value.
              * - RAX is overwritten by return value, so syscall number is saved in ORIG_RAX
              * - ORIG_RAX is set to -1 so that syscall restart logic doesn't trigger.
+             * - PTRACE_PEEKUSER reads a word at offset addr(8*ORIG_RAX) in the tracee's USER area
+             * - PTRACE_GETREGS copies the tracee's GPR to the address data(&regs) in the tracer
              *
              * 1. Wait for the process to enter the next system call.
              * 2. Print a representation of the system call.
