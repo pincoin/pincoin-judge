@@ -96,6 +96,10 @@ static void watch_program(pid_t pid) {
     long rax;
     int stopped = 0;
 
+    struct timespec tstart = { 0, 0}, tend = { 0, 0};
+
+    clock_gettime(CLOCK_MONOTONIC, &tstart);
+
     while (1) {
         /* 1. wait for child process non-blocking */
         waitpid(pid, &status, WNOHANG);
@@ -146,4 +150,9 @@ static void watch_program(pid_t pid) {
         /* 4. enter the next system call to resume child tracee */
         ptrace(PTRACE_SYSCALL, pid, NULL, NULL);
     }
+
+    clock_gettime(CLOCK_MONOTONIC, &tend);
+
+    printf("elapsed time: %.5f ms\n", (((double)tend.tv_sec + 1.0e-9*tend.tv_nsec)
+                - ((double)tstart.tv_sec + 1.0e-9*tstart.tv_nsec))*1000);
 }
