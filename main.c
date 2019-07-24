@@ -161,7 +161,9 @@ static void watch_program(pid_t pid) {
 #endif
 
         /* 5. get memory usage */
+        /*
         get_memory_usage(buf);
+        */
     }
 
     clock_gettime(CLOCK_MONOTONIC, &tend);
@@ -184,24 +186,18 @@ static int get_memory_usage(char *pid_stauts_file_path) {
 
     if (!f) return 1;
 
-    /* Read memory size data from /proc/{pid}/status */
     while (!vmsize || !vmpeak || !vmdata || !vmstk) {
         if (getline(&line, &len, f) == -1) {
-            /* Some of the information isn't there, die */
             return 1;
         }
 
         if (!strncmp(line, "VmPeak:", 7)) {
-            /* Find VmPeak */
             vmpeak = strdup(&line[7]);
         } else if (!strncmp(line, "VmSize:", 7)) {
-            /* Find VmSize */
             vmsize = strdup(&line[7]);
         } else if (!strncmp(line, "VmData:", 7)) {
-            /* Find VmData */
             vmdata = strdup(&line[7]);
         } else if (!strncmp(line, "VmStk:", 6)) {
-            /* Find VmStk */
             vmstk = strdup(&line[7]);
         }
     }
@@ -220,7 +216,6 @@ static int get_memory_usage(char *pid_stauts_file_path) {
     len = strlen(vmstk);
     vmstk[len - 4] = 0;
 
-    /* Output results to stderr */
     fprintf(stderr, "%s\t%s\t%s\t%s\n", vmsize, vmpeak, vmdata, vmstk);
 
     free(vmpeak);
