@@ -160,7 +160,7 @@ static void watch_program(pid_t pid) {
         ptrace(PTRACE_SYSCALL, pid, NULL, NULL);
         
         /* 5. get memory usage */
-        /* get_memory_usage(buf); */
+        get_memory_usage(buf);
 #endif
     }
 
@@ -176,6 +176,8 @@ static int get_memory_usage(char *pid_stauts_file_path) {
     char *vmpeak;
     char *vmrss;
     char *vmhwm;
+    char *vmdata;
+    char *vmstk;
 
     size_t len;
 
@@ -185,6 +187,8 @@ static int get_memory_usage(char *pid_stauts_file_path) {
     vmpeak = NULL;
     vmrss = NULL;
     vmhwm = NULL;
+    vmdata = NULL;
+    vmstk = NULL;
     line = malloc(128);
     len = 128;
 
@@ -193,7 +197,7 @@ static int get_memory_usage(char *pid_stauts_file_path) {
     if (!f) return 1;
 
     /* Read memory size data from /proc/{pid}/status */
-    while (!vmsize || !vmpeak || !vmrss || !vmhwm) {
+    while (!vmsize || !vmpeak || !vmrss || !vmhwm || !vmdata || !vmstk) {
         if (getline(&line, &len, f) == -1) {
             /* Some of the information isn't there, die */
             return 1;
@@ -211,6 +215,12 @@ static int get_memory_usage(char *pid_stauts_file_path) {
         } else if (!strncmp(line, "VmHWM:", 6)) {
             /* Find VmHWM */
             vmhwm = strdup(&line[7]);
+        } else if (!strncmp(line, "VmData:", 7)) {
+            /* Find VmData */
+            vmdata = strdup(&line[7]);
+        } else if (!strncmp(line, "VmStk:", 6)) {
+            /* Find VmStk */
+            vmstk = strdup(&line[7]);
         }
     }
 
@@ -227,14 +237,20 @@ static int get_memory_usage(char *pid_stauts_file_path) {
     vmrss[len - 4] = 0;
     len = strlen(vmhwm);
     vmhwm[len - 4] = 0;
+    len = strlen(vmdata);
+    vmdata[len - 4] = 0;
+    len = strlen(vmstk);
+    vmstk[len - 4] = 0;
 
     /* Output results to stderr */
-    fprintf(stderr, "%s\t%s\t%s\t%s\n", vmsize, vmpeak, vmrss, vmhwm);
+    fprintf(stderr, "%s\t%s\t%s\t%s\t%s\t%s\n", vmsize, vmpeak, vmrss, vmhwm, vmdata, vmstk);
 
     free(vmpeak);
     free(vmsize);
     free(vmrss);
     free(vmhwm);
+    free(vmdata);
+    free(vmstk);
 
     return 0;
 }
