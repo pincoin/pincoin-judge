@@ -3,6 +3,7 @@
 #include <string.h>
 #include <seccomp.h>
 #include <unistd.h>
+#include <time.h>
 
 #include <sys/ptrace.h>
 #include <sys/types.h>
@@ -24,9 +25,8 @@ int main(int argc, char *argv[]) {
     long orig_rax;
     long rax;
     int stopped = 0;
-    struct user_regs_struct regs;
 
-    scmp_filter_ctx ctx;
+    struct user_regs_struct regs;
 
     /* 1. make sure if argv provide */
     if (argc < 2) {
@@ -50,6 +50,8 @@ int main(int argc, char *argv[]) {
     }
 
     if (pid == 0) {
+        scmp_filter_ctx ctx;
+
         /* 1. make a NULL-terminated command */
         for (int i = 0; i < argc - 1; i++) {
             args[i] = strdup(argv[i + 1]);
@@ -80,6 +82,7 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "failed to replace process with %s\n", args[0]);
         exit(EXIT_FAILURE);
     } else {
+
         while (1) {
             /* 1. wait for child process non-blocking */
             waitpid(pid, &status, WNOHANG);
