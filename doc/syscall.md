@@ -85,3 +85,4 @@ write 시스템콜 예시
 
 # 참고
 * https://nullprogram.com/blog/2018/06/23/
+* https://dangokyo.me/2018/05/01/seccomp-and-ptrace/
