@@ -36,16 +36,19 @@ int main(int argc, char *argv[]) {
 
     /* 3. create a new process */
     pid = fork();
-    if (pid == -1) {
-        fprintf(stderr, "failed to create a new process\n");
-        exit(EXIT_FAILURE);
+
+    switch (pid) {
+        case -1:
+            fprintf(stderr, "failed to create a new process\n");
+            exit(EXIT_FAILURE);
+        case 0:
+            run_solution(argc, argv);
+            fprintf(stderr, "failed to replace process with %s\n", argv[1]);
+            exit(EXIT_FAILURE);
     }
 
-    if (pid == 0) {
-        run_solution(argc, argv);
-    } else {
-        watch_program(pid);
-    }
+    watch_program(pid);
+
     return 0;
 }
 
@@ -82,8 +85,6 @@ static void run_solution(int argc, char *argv[]) {
 
     /* 4. exec */
     syscall(59, args[0], args, NULL);
-    fprintf(stderr, "failed to replace process with %s\n", args[0]);
-    exit(EXIT_FAILURE);
 }
 
 static void watch_program(pid_t pid) {
