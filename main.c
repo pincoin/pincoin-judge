@@ -92,6 +92,8 @@ static void run_solution(int argc, char *argv[]) {
 static void watch_program(pid_t pid) {
     int status;
 
+    char buf[PID_STATUS_FILE_PATH_MAX];
+
 #ifdef USE_PTRACE
     struct user_regs_struct regs;
 
@@ -103,6 +105,8 @@ static void watch_program(pid_t pid) {
     struct timespec tstart = { 0, 0}, tend = { 0, 0};
 
     clock_gettime(CLOCK_MONOTONIC, &tstart);
+
+    snprintf(buf, PID_STATUS_FILE_PATH_MAX, "/proc/%d/status", pid);
 
     while (1) {
         /* 1. wait for child process non-blocking */
@@ -154,6 +158,9 @@ static void watch_program(pid_t pid) {
 
         /* 4. enter the next system call to resume child tracee */
         ptrace(PTRACE_SYSCALL, pid, NULL, NULL);
+        
+        /* 5. get memory usage */
+        /* get_memory_usage(buf); */
 #endif
     }
 
@@ -161,4 +168,73 @@ static void watch_program(pid_t pid) {
 
     printf("elapsed time: %.5f ms\n", (((double)tend.tv_sec + 1.0e-9*tend.tv_nsec)
                 - ((double)tstart.tv_sec + 1.0e-9*tstart.tv_nsec))*1000);
+}
+
+static int get_memory_usage(char *pid_stauts_file_path) {
+    char *line;
+    char *vmsize;
+    char *vmpeak;
+    char *vmrss;
+    char *vmhwm;
+
+    size_t len;
+
+    FILE *f;
+
+    vmsize = NULL;
+    vmpeak = NULL;
+    vmrss = NULL;
+    vmhwm = NULL;
+    line = malloc(128);
+    len = 128;
+
+    f = fopen(pid_stauts_file_path, "r");
+
+    if (!f) return 1;
+
+    /* Read memory size data from /proc/{pid}/status */
+    while (!vmsize || !vmpeak || !vmrss || !vmhwm) {
+        if (getline(&line, &len, f) == -1) {
+            /* Some of the information isn't there, die */
+            return 1;
+        }
+
+        if (!strncmp(line, "VmPeak:", 7)) {
+            /* Find VmPeak */
+            vmpeak = strdup(&line[7]);
+        } else if (!strncmp(line, "VmSize:", 7)) {
+            /* Find VmSize */
+            vmsize = strdup(&line[7]);
+        } else if (!strncmp(line, "VmRSS:", 6)) {
+            /* Find VmRSS */
+            vmrss = strdup(&line[7]);
+        } else if (!strncmp(line, "VmHWM:", 6)) {
+            /* Find VmHWM */
+            vmhwm = strdup(&line[7]);
+        }
+    }
+
+    free(line);
+
+    fclose(f);
+
+    /* Get rid of " kB\n"*/
+    len = strlen(vmsize);
+    vmsize[len - 4] = 0;
+    len = strlen(vmpeak);
+    vmpeak[len - 4] = 0;
+    len = strlen(vmrss);
+    vmrss[len - 4] = 0;
+    len = strlen(vmhwm);
+    vmhwm[len - 4] = 0;
+
+    /* Output results to stderr */
+    fprintf(stderr, "%s\t%s\t%s\t%s\n", vmsize, vmpeak, vmrss, vmhwm);
+
+    free(vmpeak);
+    free(vmsize);
+    free(vmrss);
+    free(vmhwm);
+
+    return 0;
 }
