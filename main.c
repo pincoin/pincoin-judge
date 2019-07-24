@@ -158,10 +158,10 @@ static void watch_program(pid_t pid) {
 
         /* 4. enter the next system call to resume child tracee */
         ptrace(PTRACE_SYSCALL, pid, NULL, NULL);
-        
+#endif
+
         /* 5. get memory usage */
         get_memory_usage(buf);
-#endif
     }
 
     clock_gettime(CLOCK_MONOTONIC, &tend);
@@ -180,9 +180,7 @@ static int get_memory_usage(char *pid_stauts_file_path) {
 
     size_t len = 128;
 
-    FILE *f;
-
-    f = fopen(pid_stauts_file_path, "r");
+    FILE *f = fopen(pid_stauts_file_path, "r");
 
     if (!f) return 1;
 
