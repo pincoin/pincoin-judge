@@ -23,7 +23,7 @@ int main(int argc, char *argv[]) {
 
     long orig_rax;
     long rax;
-    int insyscall = 0;
+    int stop = 0;
     struct user_regs_struct regs;
 
     scmp_filter_ctx ctx;
@@ -93,21 +93,33 @@ int main(int argc, char *argv[]) {
                 break;
             }
 
+            /* 3. retrieve child process tracee's USER area */
+            /* NOTE
+             * - process has USER, DATA, TEXT area
+             * - accumulator register: %AX(16bit), %EAX(32bit), %RAX(64bit)
+             * - ORIG_RAX has syscall number
+             */
             orig_rax = ptrace(PTRACE_PEEKUSER, pid, 8 * ORIG_RAX, NULL);
 
             if (orig_rax > -1) {
-                if (insyscall == 0) {
+                if (stop == 1) {
                     fprintf(stderr, "syscall(%ld)\n", orig_rax);
+
                     ptrace(PTRACE_GETREGS, pid, NULL, &regs);
-                    insyscall = 1;
+
+                    stop = 0;
                 } else {
-                    rax  = ptrace(PTRACE_PEEKUSER, pid, 8 * RAX, NULL); /* must fetch */
+                    /* NOTE
+                     * - syscall result value is in %RAX
+                     */
+                    rax  = ptrace(PTRACE_PEEKUSER, pid, 8 * RAX, NULL); /* MUST pop even if RAX is not used. */
                     /* fprintf(stderr, " return with %ld\n", rax); */
-                    insyscall = 0;
+
+                    stop = 1;
                 }
             }
 
-            /* invoke system call to resume child tracee */
+            /* 4. invoke system call to resume child tracee */
             ptrace(PTRACE_SYSCALL, pid, NULL, NULL);
         }
     }
