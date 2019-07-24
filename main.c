@@ -112,14 +112,12 @@ int main(int argc, char *argv[]) {
                 if (stop == 1) {
                     fprintf(stderr, "syscall(%ld)\n", orig_rax);
 
-                    /* NOTE: MUST read general-purpose registers */
+                    /* NOTE: MUST read all other general-purpose registers even if GPRs are not used */
                     ptrace(PTRACE_GETREGS, pid, NULL, &regs);
 
                     stop = 0;
                 } else {
-                    /* NOTE
-                     * - MUST pop even if RAX is not used.
-                     */
+                    /* NOTE: MUST pop even if RAX is not used  */
                     rax  = ptrace(PTRACE_PEEKUSER, pid, 8 * RAX, NULL);
                     /* fprintf(stderr, " return with %ld\n", rax); */
 
