@@ -65,7 +65,9 @@ static void run_solution(int argc, char *argv[]) {
     args[argc - 1] = NULL;
 
     /* 2. use ptrace */
+#ifdef USE_PTRACE
     ptrace(PTRACE_TRACEME, 0, NULL, NULL);
+#endif
 
     /* 3. use seccomp sandbox */
     /* 3-1. initalize seccomp */
@@ -90,11 +92,13 @@ static void run_solution(int argc, char *argv[]) {
 static void watch_program(pid_t pid) {
     int status;
 
+#ifdef USE_PTRACE
     struct user_regs_struct regs;
 
     long orig_rax;
     long rax;
     int stopped = 0;
+#endif
 
     struct timespec tstart = { 0, 0}, tend = { 0, 0};
 
@@ -113,6 +117,7 @@ static void watch_program(pid_t pid) {
             break;
         }
 
+#ifdef USE_PTRACE
         /* 3. retrieve child process tracee's USER area */
         /* NOTE
          * - process has USER, DATA, TEXT area
@@ -149,6 +154,7 @@ static void watch_program(pid_t pid) {
 
         /* 4. enter the next system call to resume child tracee */
         ptrace(PTRACE_SYSCALL, pid, NULL, NULL);
+#endif
     }
 
     clock_gettime(CLOCK_MONOTONIC, &tend);
