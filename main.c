@@ -23,7 +23,7 @@ int main(int argc, char *argv[]) {
 
     long orig_rax;
     long rax;
-    int stop = 0;
+    int stopped = 0;
     struct user_regs_struct regs;
 
     scmp_filter_ctx ctx;
@@ -109,19 +109,19 @@ int main(int argc, char *argv[]) {
             orig_rax = ptrace(PTRACE_PEEKUSER, pid, 8 * ORIG_RAX, NULL);
 
             if (orig_rax > -1) {
-                if (stop == 1) {
+                if (stopped == 1) {
                     fprintf(stderr, "syscall(%ld)\n", orig_rax);
 
                     /* NOTE: MUST read all other general-purpose registers even if GPRs are not used */
                     ptrace(PTRACE_GETREGS, pid, NULL, &regs);
 
-                    stop = 0;
+                    stopped = 0;
                 } else {
                     /* NOTE: MUST pop even if RAX is not used  */
                     rax  = ptrace(PTRACE_PEEKUSER, pid, 8 * RAX, NULL);
                     /* fprintf(stderr, " return with %ld\n", rax); */
 
-                    stop = 1;
+                    stopped = 1;
                 }
             }
 
