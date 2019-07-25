@@ -92,8 +92,6 @@ static void run_solution(int argc, char *argv[]) {
 static void watch_program(pid_t pid) {
     int status;
 
-    char buf[PID_STATUS_FILE_PATH_MAX];
-
 #ifdef USE_PTRACE
     struct user_regs_struct regs;
 
@@ -102,11 +100,13 @@ static void watch_program(pid_t pid) {
     int stopped = 0;
 #endif
 
+    char buf[PID_STATUS_PATH_MAX];
+
     struct timespec tstart = { 0, 0}, tend = { 0, 0};
 
     clock_gettime(CLOCK_MONOTONIC, &tstart);
 
-    snprintf(buf, PID_STATUS_FILE_PATH_MAX, "/proc/%d/status", pid);
+    snprintf(buf, PID_STATUS_PATH_MAX, "/proc/%d/status", pid);
 
     while (1) {
         /* 1. wait for child process non-blocking */
@@ -161,67 +161,10 @@ static void watch_program(pid_t pid) {
 #endif
 
         /* 5. get memory usage */
-        /*
-        get_memory_usage(buf);
-        */
     }
 
     clock_gettime(CLOCK_MONOTONIC, &tend);
 
     printf("elapsed time: %.5f ms\n", (((double)tend.tv_sec + 1.0e-9*tend.tv_nsec)
                 - ((double)tstart.tv_sec + 1.0e-9*tstart.tv_nsec))*1000);
-}
-
-static int get_memory_usage(char *pid_stauts_file_path) {
-    char *line = malloc(128);
-
-    char *vmsize = NULL;
-    char *vmpeak = NULL;
-    char *vmdata = NULL;
-    char *vmstk = NULL;
-
-    size_t len = 128;
-
-    FILE *f = fopen(pid_stauts_file_path, "r");
-
-    if (!f) return 1;
-
-    while (!vmsize || !vmpeak || !vmdata || !vmstk) {
-        if (getline(&line, &len, f) == -1) {
-            return 1;
-        }
-
-        if (!strncmp(line, "VmPeak:", 7)) {
-            vmpeak = strdup(&line[7]);
-        } else if (!strncmp(line, "VmSize:", 7)) {
-            vmsize = strdup(&line[7]);
-        } else if (!strncmp(line, "VmData:", 7)) {
-            vmdata = strdup(&line[7]);
-        } else if (!strncmp(line, "VmStk:", 6)) {
-            vmstk = strdup(&line[7]);
-        }
-    }
-
-    free(line);
-
-    fclose(f);
-
-    /* Get rid of " kB\n"*/
-    len = strlen(vmsize);
-    vmsize[len - 4] = 0;
-    len = strlen(vmpeak);
-    vmpeak[len - 4] = 0;
-    len = strlen(vmdata);
-    vmdata[len - 4] = 0;
-    len = strlen(vmstk);
-    vmstk[len - 4] = 0;
-
-    fprintf(stderr, "%s\t%s\t%s\t%s\n", vmsize, vmpeak, vmdata, vmstk);
-
-    free(vmpeak);
-    free(vmsize);
-    free(vmdata);
-    free(vmstk);
-
-    return 0;
 }
