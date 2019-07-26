@@ -102,8 +102,8 @@ static void watch_program(pid_t pid) {
 #endif
 
     char pid_status_path[PID_STATUS_PATH_MAX];
-    /*
     FILE *pid_status_file;
+    /*
     int data, stack, max_total;
     char *vm;
     */
