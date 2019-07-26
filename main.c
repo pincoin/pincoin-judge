@@ -103,10 +103,8 @@ static void watch_program(pid_t pid) {
 
     char pid_status_path[PID_STATUS_PATH_MAX];
     FILE *pid_status_file;
-    /*
     int data, stack, max_total;
     char *vm;
-    */
 
     struct timespec tstart = { 0, 0}, tend = { 0, 0};
 
