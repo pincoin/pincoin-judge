@@ -90,6 +90,7 @@ static void run_solution(int argc, char *argv[]) {
 }
 
 static void watch_program(pid_t pid) {
+    /* declaration */
     int status;
 
 #ifdef USE_PTRACE
@@ -97,16 +98,24 @@ static void watch_program(pid_t pid) {
 
     long orig_rax;
     long rax;
-    int stopped = 0;
+    int stopped;
 #endif
 
-    char buf[PID_STATUS_PATH_MAX];
+    char pid_status_path[PID_STATUS_PATH_MAX];
+    /*
+    FILE *pid_status_file;
+    int data, stack, max_total;
+    char *vm;
+    */
 
     struct timespec tstart = { 0, 0}, tend = { 0, 0};
 
-    clock_gettime(CLOCK_MONOTONIC, &tstart);
+    /* initialization */
+    snprintf(pid_status_path, PID_STATUS_PATH_MAX, "/proc/%d/status", pid);
 
-    snprintf(buf, PID_STATUS_PATH_MAX, "/proc/%d/status", pid);
+    stopped = 0;
+
+    clock_gettime(CLOCK_MONOTONIC, &tstart);
 
     while (1) {
         /* 1. wait for child process non-blocking */
@@ -165,6 +174,8 @@ static void watch_program(pid_t pid) {
 
     clock_gettime(CLOCK_MONOTONIC, &tend);
 
-    printf("elapsed time: %.5f ms\n", (((double)tend.tv_sec + 1.0e-9*tend.tv_nsec)
-                - ((double)tstart.tv_sec + 1.0e-9*tstart.tv_nsec))*1000);
+    fprintf(stderr, "%s\n", pid_status_path);
+
+    fprintf(stderr, "elapsed time: %.5f ms\n",
+            (((double)tend.tv_sec + 1.0e-9*tend.tv_nsec) - ((double)tstart.tv_sec + 1.0e-9*tstart.tv_nsec))*1000);
 }
