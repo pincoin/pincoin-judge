@@ -10,6 +10,7 @@
 #include <sys/wait.h>
 #include <sys/user.h>
 #include <sys/reg.h>
+#include <sys/resource.h>
 #include <sys/syscall.h>
 #include <sys/prctl.h>  
 #include <sys/socket.h>
@@ -90,7 +91,6 @@ static void run_solution(int argc, char *argv[]) {
 }
 
 static void watch_program(pid_t pid) {
-    /* declaration */
     int status;
 
 #ifdef USE_PTRACE
@@ -109,7 +109,8 @@ static void watch_program(pid_t pid) {
 
     struct timespec tstart = { 0, 0}, tend = { 0, 0};
 
-    /* initialization */
+    struct rusage resource_usage;
+
     snprintf(pid_status_path, PID_STATUS_PATH_MAX, "/proc/%d/status", pid);
 
     stopped = 0;
@@ -118,7 +119,7 @@ static void watch_program(pid_t pid) {
 
     while (1) {
         /* 1. wait for child process non-blocking */
-        if (waitpid(pid, &status, 0) < 0) {
+        if (wait4(pid, &status, WUNTRACED|WCONTINUED, &resource_usage) < 0) {
             fprintf(stderr, "failed to wait for child process\n");
             exit(EXIT_FAILURE);
         }
@@ -190,6 +191,10 @@ static void watch_program(pid_t pid) {
 
             if (data + stack > max_total) {
                 max_total = data + stack;
+            }
+
+            if (max_total > MEMORY_LIMIT) {
+                kill(pid, SIGKILL);
             }
         }
     }
