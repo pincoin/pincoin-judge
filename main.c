@@ -103,8 +103,9 @@ static void watch_program(pid_t pid) {
 
     char pid_status_path[PID_STATUS_PATH_MAX];
     FILE *pid_status_file;
-    int data, stack, max_total;
+    int data = 0, stack = 0, max_total = 0;
     char *vm;
+    char buf[PID_STATUS_FILE_MAX];
 
     struct timespec tstart = { 0, 0}, tend = { 0, 0};
 
@@ -117,7 +118,10 @@ static void watch_program(pid_t pid) {
 
     while (1) {
         /* 1. wait for child process non-blocking */
-        waitpid(pid, &status, WNOHANG);
+        if (waitpid(pid, &status, 0) < 0) {
+            fprintf(stderr, "failed to wait for child process\n");
+            exit(EXIT_FAILURE);
+        }
 
         /* 2. check if child terminated */
         if (WIFEXITED(status)) {
@@ -168,11 +172,31 @@ static void watch_program(pid_t pid) {
 #endif
 
         /* 5. get memory usage */
+        pid_status_file = fopen(pid_status_path, "r");
+
+        if (pid_status_file) {
+            fread(buf, PID_STATUS_FILE_MAX - 1, 1, pid_status_file);
+            buf[PID_STATUS_FILE_MAX - 1] = '\0';
+            fclose(pid_status_file);
+
+            vm = strstr(buf, "VmData:");
+            if (vm) {
+                sscanf(vm, "%*s %d", &data);
+            }
+            vm = strstr(buf, "VmStk:");
+            if (vm) {
+                sscanf(vm, "%*s %d", &stack);
+            }
+
+            if (data + stack > max_total) {
+                max_total = data + stack;
+            }
+        }
     }
 
     clock_gettime(CLOCK_MONOTONIC, &tend);
 
-    fprintf(stderr, "%s\n", pid_status_path);
+    fprintf(stderr, "%s stack+data=%dkB\n", pid_status_path, max_total);
 
     fprintf(stderr, "elapsed time: %.5f ms\n",
             (((double)tend.tv_sec + 1.0e-9*tend.tv_nsec) - ((double)tstart.tv_sec + 1.0e-9*tstart.tv_nsec))*1000);
