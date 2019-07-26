@@ -59,6 +59,8 @@ static void run_solution(int argc, char *argv[]) {
     /* NOTE: ctx variable is auto in order not to intefere parent syscalls */
     scmp_filter_ctx ctx;
 
+    struct rlimit rlim;
+
     /* 1. make a NULL-terminated command */
     for (int i = 0; i < argc - 1; i++) {
         args[i] = strdup(argv[i + 1]);
@@ -86,7 +88,13 @@ static void run_solution(int argc, char *argv[]) {
     /* 3-4. load seccomp rules */
     seccomp_load(ctx);
 
-    /* 4. exec */
+    /* 4. exec time limit */
+    rlim.rlim_cur = rlim.rlim_max = TIME_LIMIT;
+    if (setrlimit(RLIMIT_CPU, &rlim) < 0) {
+        fprintf(stderr, "failed to limit cpu time: %dsec\n", TIME_LIMIT);
+    }
+
+    /* 5. exec */
     syscall(59, args[0], args, NULL);
 }
 
@@ -108,6 +116,7 @@ static void watch_program(pid_t pid) {
     char buf[PID_STATUS_FILE_MAX];
 
     struct timespec tstart = { 0, 0}, tend = { 0, 0};
+
 
     struct rusage resource_usage;
 
@@ -172,7 +181,7 @@ static void watch_program(pid_t pid) {
         ptrace(PTRACE_SYSCALL, pid, NULL, NULL);
 #endif
 
-        /* 5. get memory usage */
+        /* 5. check memory limit */
         pid_status_file = fopen(pid_status_path, "r");
 
         if (pid_status_file) {
@@ -194,6 +203,7 @@ static void watch_program(pid_t pid) {
             }
 
             if (max_total > MEMORY_LIMIT) {
+                fprintf(stderr, "kill child due to over memory limit: %dkB\n", max_total);
                 kill(pid, SIGKILL);
             }
         }

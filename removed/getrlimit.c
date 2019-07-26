@@ -16,6 +16,7 @@ int main()
     getrlimit(RLIMIT_CPU, &rlim);
 
     if (rlim.rlim_cur == RLIM_INFINITY) {
+        printf("%ld\n", RLIM_INFINITY);
         printf("UNLIMIT\n");
     }
 }
