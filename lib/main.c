@@ -19,5 +19,5 @@
 #include "whitelist.h"
 
 int main(int argc, char *argv[]) {
-    return exec_judge(argc, argv);
+    return examine(argc, argv);
 }

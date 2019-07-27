@@ -7,7 +7,7 @@
 #define MEMORY_LIMIT 50000
 #define TIME_LIMIT 1
 
-extern int exec_judge(int argc, char *argv[]);
+extern int examine(int argc, char *argv[]);
 extern void run_solution(char **args);
 extern void watch_program(pid_t pid);
 

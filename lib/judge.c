@@ -18,7 +18,7 @@
 #include "judge.h"
 #include "whitelist.h"
 
-extern int exec_judge(int argc, char *argv[]) {
+extern int examine(int argc, char *argv[]) {
     pid_t  pid;
 
     char **args = malloc(sizeof(char *) * argc);
