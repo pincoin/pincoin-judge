@@ -21,13 +21,21 @@
 extern int exec_judge(int argc, char *argv[]) {
     pid_t  pid;
 
-    /* 1. make sure if argv provide */
+    char **args = malloc(sizeof(char *) * argc);
+
+    /* 1. make sure if argv provided */
     if (argc < 2) {
         fprintf(stderr, "Usage: %s requires arguments\n", argv[0]);
         exit(EXIT_FAILURE);
     }
 
-    /* 2. process control */
+    /* 2. make a NULL-terminated command */
+    for (int i = 0; i < argc - 1; i++) {
+        args[i] = strdup(argv[i + 1]);
+    }
+    args[argc - 1] = NULL;
+
+    /* 3. process control */
     /* NOTE
      * PR_SET_NO_NEW_PRIVS = 1: ensures the process does not gain privileges
      * PR_SET_DUMPABLE = 0: does not produce core dump
@@ -35,7 +43,7 @@ extern int exec_judge(int argc, char *argv[]) {
     prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0);
     prctl(PR_SET_DUMPABLE, 0, 0, 0, 0);
 
-    /* 3. create a new process */
+    /* 4. create a new process */
     pid = fork();
 
     switch (pid) {
@@ -43,58 +51,55 @@ extern int exec_judge(int argc, char *argv[]) {
             fprintf(stderr, "failed to create a new process\n");
             exit(EXIT_FAILURE);
         case 0:
-            run_solution(argc, argv);
+            /* 4-1. run a solution as a child */
+            run_solution(args);
             fprintf(stderr, "failed to replace process with %s\n", argv[1]);
             exit(EXIT_FAILURE);
     }
 
+    /* 4-2. watch program as a parent */
     watch_program(pid);
+
+    /* 5. clean up */
+    free(args);
 
     return 0;
 }
 
-extern void run_solution(int argc, char *argv[]) {
-    char **args = malloc(sizeof(char *) * argc);
-
+extern void run_solution(char **args) {
     /* NOTE: ctx variable is auto in order not to intefere parent syscalls */
     scmp_filter_ctx ctx;
 
     struct rlimit rlim;
 
-    /* 1. make a NULL-terminated command */
-    for (int i = 0; i < argc - 1; i++) {
-        args[i] = strdup(argv[i + 1]);
-    }
-    args[argc - 1] = NULL;
-
-    /* 2. use ptrace */
+    /* 1. use ptrace */
 #ifdef USE_PTRACE
     ptrace(PTRACE_TRACEME, 0, NULL, NULL);
 #endif
 
-    /* 3. use seccomp sandbox */
-    /* 3-1. initalize seccomp */
+    /* 2. use seccomp sandbox */
+    /* 2-1. initalize seccomp */
     ctx = seccomp_init(SCMP_ACT_KILL);
 
-    /* 3-2. allow functions from whitelist */
+    /* 2-2. allow functions from whitelist */
     for (int i = 0; i < size_of_whitelist_syscall; i++) {
         seccomp_rule_add(ctx, SCMP_ACT_ALLOW, whitelist_syscall[i], 0);
     }
 
-    /* 3-3. allow socket function for unix socket */
+    /* 2-3. allow socket function for unix socket */
     seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(socket), 1,
             SCMP_A0(SCMP_CMP_EQ, AF_UNIX));
 
-    /* 3-4. load seccomp rules */
+    /* 2-4. load seccomp rules */
     seccomp_load(ctx);
 
-    /* 4.set resource limit */
+    /* 3. set resource limit */
     rlim.rlim_cur = rlim.rlim_max = TIME_LIMIT;
     if (setrlimit(RLIMIT_CPU, &rlim) < 0) {
         fprintf(stderr, "failed to limit cpu time: %dsec\n", TIME_LIMIT);
     }
 
-    /* 5. exec */
+    /* 4. exec */
     syscall(59, args[0], args, NULL);
 }
 
@@ -124,7 +129,7 @@ extern void watch_program(pid_t pid) {
     clock_gettime(CLOCK_MONOTONIC, &tstart);
 
     while (1) {
-        /* 1. wait for child process non-blocking */
+        /* 1. wait for child process */
         if (wait4(pid, &status, WUNTRACED|WCONTINUED, &resource_usage) < 0) {
             fprintf(stderr, "failed to wait for child process\n");
             exit(EXIT_FAILURE);
