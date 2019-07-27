@@ -7,6 +7,7 @@
 #define MEMORY_LIMIT 50000
 #define TIME_LIMIT 1
 
+static int exec_judge(int argc, char *argv[]);
 static void run_solution(int argc, char *argv[]);
 static void watch_program(pid_t pid);
 

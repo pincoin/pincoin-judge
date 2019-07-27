@@ -19,6 +19,10 @@
 #include "whitelist.h"
 
 int main(int argc, char *argv[]) {
+    return exec_judge(argc, argv);
+}
+
+static int exec_judge(int argc, char *argv[]) {
     pid_t  pid;
 
     /* 1. make sure if argv provide */
@@ -88,7 +92,7 @@ static void run_solution(int argc, char *argv[]) {
     /* 3-4. load seccomp rules */
     seccomp_load(ctx);
 
-    /* 4. exec time limit */
+    /* 4.set resource limit */
     rlim.rlim_cur = rlim.rlim_max = TIME_LIMIT;
     if (setrlimit(RLIMIT_CPU, &rlim) < 0) {
         fprintf(stderr, "failed to limit cpu time: %dsec\n", TIME_LIMIT);
@@ -116,7 +120,6 @@ static void watch_program(pid_t pid) {
     char buf[PID_STATUS_FILE_MAX];
 
     struct timespec tstart = { 0, 0}, tend = { 0, 0};
-
 
     struct rusage resource_usage;
 
