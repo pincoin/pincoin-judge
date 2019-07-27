@@ -1,18 +1,22 @@
 CC = /usr/bin/gcc
+AR = /usr/bin/ar
 CFLAGS = -Wall -DUSE_PTRACE -O2
 LDFLAGS = -lseccomp
+ARFLAGS = rcs
 
-TARGET = judge
 OBJECTS = main.o judge.o whitelist.o
 
-all: $(TARGET)
+all: sandbox libsandbox.a
 
-$(TARGET): $(OBJECTS)
-	$(CC) $(OBJECTS) $(LDFLAGS) -o $@ 
+sandbox: $(OBJECTS)
+	$(CC) $^ $(LDFLAGS) -o $@ 
+
+libsandbox.a: judge.o whitelist.o
+	$(AR) $(ARFLAGS) $@ $^
 
 c.o:
 	$(CC) $(CFLAGS) -c $< -o $@ 
 
 clean:
-	rm -f $(TARGET) $(OBJECTS)
+	rm -f sandbox *.a *.o
 	rm -f *.out *.log
