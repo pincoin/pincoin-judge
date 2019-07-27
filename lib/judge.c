@@ -22,6 +22,8 @@ extern int examine(int argc, char *argv[]) {
     pid_t  pid;
 
     char **args = malloc(sizeof(char *) * argc);
+    
+    FILE *fp_stdout, *fp_stderr;
 
     /* 1. make sure if argv provided */
     if (argc < 2) {
@@ -43,6 +45,9 @@ extern int examine(int argc, char *argv[]) {
     prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0);
     prctl(PR_SET_DUMPABLE, 0, 0, 0, 0);
 
+    fp_stdout = freopen("stdout.log", "w", stdout);
+    fp_stderr = freopen("stderr.log", "w", stderr);
+
     /* 4. create a new process */
     pid = fork();
 
@@ -61,14 +66,22 @@ extern int examine(int argc, char *argv[]) {
     watch_program(pid);
 
     /* 5. clean up */
-    free(args);
+    if (args) {
+        free(args);
+    }
+
+    if (fp_stdout) {
+        fclose(stdout);
+    }
+
+    if (fp_stderr) {
+        fclose(stderr);
+    }
 
     return 0;
 }
 
 extern void run_solution(char **args) {
-    freopen("stdout.log", "w", stdout);
-    freopen("stderr.log", "w", stderr);
 
     /* NOTE: ctx variable is auto in order not to intefere parent syscalls */
     scmp_filter_ctx ctx;
