@@ -67,6 +67,9 @@ extern int examine(int argc, char *argv[]) {
 }
 
 extern void run_solution(char **args) {
+    freopen("stdout.log", "w", stdout);
+    freopen("stderr.log", "w", stderr);
+
     /* NOTE: ctx variable is auto in order not to intefere parent syscalls */
     scmp_filter_ctx ctx;
 

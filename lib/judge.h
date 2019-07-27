@@ -1,6 +1,8 @@
 #ifndef __judge_h__
 #define __judge_h__
 
+#include <unistd.h>
+
 #define PID_STATUS_PATH_MAX 2048
 #define PID_STATUS_FILE_MAX 2048
 

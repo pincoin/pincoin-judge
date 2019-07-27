@@ -1,6 +1,5 @@
 #include <seccomp.h>
 
-
 int whitelist_syscall[] = {
     SCMP_SYS(access),
     SCMP_SYS(arch_prctl),
@@ -64,4 +63,3 @@ int whitelist_syscall[] = {
 };
 
 int size_of_whitelist_syscall = sizeof(whitelist_syscall) / sizeof(int);
-
