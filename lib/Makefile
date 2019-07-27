@@ -1,17 +1,18 @@
-all: a.out
+CC = /usr/bin/gcc
+CFLAGS = -Wall -DUSE_PTRACE -O2
+LDFLAGS = -lseccomp
 
-a.out: main.o judge.o whitelist.o
-	gcc -Wall -o a.out main.o judge.o whitelist.o -lseccomp
+TARGET = judge
+OBJECTS = main.o judge.o whitelist.o
 
-main.o: main.c
-	gcc -g -Wall -o main.o -c main.c
+all: $(TARGET)
 
-judge.o: judge.c judge.h
-	gcc -g -Wall -D USE_PTRACE -o judge.o -c judge.c
+$(TARGET): $(OBJECTS)
+	$(CC) $(OBJECTS) $(LDFLAGS) -o $@ 
 
-whitelist.o: whitelist.c whitelist.h
-	gcc -g -Wall -o whitelist.o -c whitelist.c
+c.o:
+	$(CC) $(CFLAGS) -c $< -o $@ 
 
 clean:
-	rm -f a.out *.o
+	rm -f $(TARGET) $(OBJECTS)
 	rm -f *.out *.log
