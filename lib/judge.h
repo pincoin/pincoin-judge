@@ -13,6 +13,6 @@ extern int examine(int argc, char *argv[]);
 extern void run_solution(char **args);
 extern void watch_program(pid_t pid);
 
-extern int hello(char *s);
+extern int hello(int i, char c, char *s);
 
 #endif

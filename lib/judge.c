@@ -228,7 +228,7 @@ extern void watch_program(pid_t pid) {
             (((double)tend.tv_sec + 1.0e-9*tend.tv_nsec) - ((double)tstart.tv_sec + 1.0e-9*tstart.tv_nsec))*1000);
 }
 
-extern int hello(char *s) {
-    printf("hello %s\n", s);
+extern int hello(int i, char c, char *s) {
+    printf("hello %d %c %s\n", i, c, s);
     return 0;
 }
