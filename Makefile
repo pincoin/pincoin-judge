@@ -1,6 +1,6 @@
 LIB_DIR = lib
 
-default: sandbox
+all: sandbox
 
 sandbox: setup.py sandbox.pyx lib/libsandbox.a
 	python3 setup.py build_ext --inplace && rm -f sandbox.c && rm -rf build

@@ -5,7 +5,7 @@ from Cython.Build import cythonize
 sandbox_extension = Extension(
     name="sandbox",
     sources=["sandbox.pyx"],
-    libraries=["sandbox"],
+    libraries=["sandbox", "seccomp"],
     library_dirs=["lib"],
     include_dirs=["lib"]
 )
