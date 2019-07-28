@@ -3,10 +3,11 @@ LIB_DIR = lib
 all: sandbox
 
 sandbox: setup.py sandbox.pyx lib/libsandbox.a
-	python3 setup.py build_ext --inplace && rm -f sandbox.c && rm -rf build
+	python3 setup.py build_ext --inplace
 
 lib/libsandbox.a:
 	make -C lib libsandbox.a
 
 clean:
-	rm -rf *.so *.log
+	make -C lib clean
+	rm -rf build *.so *.log

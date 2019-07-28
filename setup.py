@@ -11,6 +11,6 @@ sandbox_extension = Extension(
 )
 
 setup(
-    name="pysandbox",
+    name="pincoin sandbox",
     ext_modules=cythonize([sandbox_extension])
 )
