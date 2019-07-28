@@ -177,6 +177,7 @@ dmypy.json
 .pyre/
 
 # Test
+sandbox.c
 Test.class
 node_modules
 package.json
