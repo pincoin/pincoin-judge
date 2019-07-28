@@ -1,3 +1,6 @@
 import sandbox 
 
-sandbox.py_hello(3, 'c', b"world")
+
+if __name__ == '__main__':
+    sandbox.py_hello(b"world")
+

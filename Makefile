@@ -10,4 +10,4 @@ lib/libsandbox.a:
 
 clean:
 	make -C lib clean
-	rm -rf build *.so *.log
+	rm -rf build *.c *.so *.log
