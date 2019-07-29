@@ -18,14 +18,13 @@
 #include "judge.h"
 #include "whitelist.h"
 
+static int examine();
 static void run_solution(char **args);
 static void watch_program(pid_t pid);
 
 extern int test_examine(int argc, char *argv[]) {
-    pid_t  pid;
+    char **args = malloc(sizeof(char *) * argc + 1);
 
-    char **args = malloc(sizeof(char *) * argc);
-    
     /* 1. make sure if argv provided */
     if (argc < 2) {
         fprintf(stderr, "Usage: %s requires arguments\n", argv[0]);
@@ -38,32 +37,10 @@ extern int test_examine(int argc, char *argv[]) {
     }
     args[argc - 1] = NULL;
 
-    /* 3. process control */
-    /* NOTE
-     * PR_SET_NO_NEW_PRIVS = 1: ensures the process does not gain privileges
-     * PR_SET_DUMPABLE = 0: does not produce core dump
-     */
-    prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0);
-    prctl(PR_SET_DUMPABLE, 0, 0, 0, 0);
+    /* 3. perform examine */
+    examine(args);
 
-    /* 4. create a new process */
-    pid = fork();
-
-    switch (pid) {
-        case -1:
-            fprintf(stderr, "failed to create a new process\n");
-            exit(EXIT_FAILURE);
-        case 0:
-            /* 4-1. run a solution as a child */
-            run_solution(args);
-            fprintf(stderr, "failed to replace process with %s\n", argv[1]);
-            exit(EXIT_FAILURE);
-    }
-
-    /* 4-2. watch program as a parent */
-    watch_program(pid);
-
-    /* 5. clean up */
+    /* 4. clean up */
     if (args) {
         free(args);
     }
@@ -72,8 +49,6 @@ extern int test_examine(int argc, char *argv[]) {
 }
 
 extern int py_examine(int argc, char *argv[]) {
-    pid_t  pid;
-
     char **args = malloc(sizeof(char *) * argc + 1);
     
     /* 1. make sure if argv provided */
@@ -88,7 +63,19 @@ extern int py_examine(int argc, char *argv[]) {
     }
     args[argc] = NULL;
 
-    /* 3. process control */
+    /* 3. perform examine */
+    examine(args);
+
+    /* 4. clean up */
+    if (args) {
+        free(args);
+    }
+}
+
+extern int examine(char **args) {
+    pid_t  pid;
+
+    /* 1. process control */
     /* NOTE
      * PR_SET_NO_NEW_PRIVS = 1: ensures the process does not gain privileges
      * PR_SET_DUMPABLE = 0: does not produce core dump
@@ -96,7 +83,7 @@ extern int py_examine(int argc, char *argv[]) {
     prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0);
     prctl(PR_SET_DUMPABLE, 0, 0, 0, 0);
 
-    /* 4. create a new process */
+    /* 2. create a new process */
     pid = fork();
 
     switch (pid) {
@@ -104,19 +91,14 @@ extern int py_examine(int argc, char *argv[]) {
             fprintf(stderr, "failed to create a new process\n");
             exit(EXIT_FAILURE);
         case 0:
-            /* 4-1. run a solution as a child */
+            /* 2-1. run a solution as a child */
             run_solution(args);
-            fprintf(stderr, "failed to replace process with %s\n", argv[1]);
+            fprintf(stderr, "failed to replace process with %s\n", args[0]);
             exit(EXIT_FAILURE);
     }
 
-    /* 4-2. watch program as a parent */
+    /* 2-2. watch program as a parent */
     watch_program(pid);
-
-    /* 5. clean up */
-    if (args) {
-        free(args);
-    }
 
     return 0;
 }
