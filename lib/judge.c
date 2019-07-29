@@ -18,6 +18,9 @@
 #include "judge.h"
 #include "whitelist.h"
 
+static void run_solution(char **args);
+static void watch_program(pid_t pid);
+
 extern int examine(int argc, char *argv[]) {
     pid_t  pid;
 
@@ -74,7 +77,7 @@ extern int examine(int argc, char *argv[]) {
     return 0;
 }
 
-extern void run_solution(char **args) {
+static void run_solution(char **args) {
 
     /* NOTE: ctx variable is auto in order not to intefere parent syscalls */
     scmp_filter_ctx ctx;
@@ -112,7 +115,7 @@ extern void run_solution(char **args) {
     syscall(59, args[0], args, NULL);
 }
 
-extern void watch_program(pid_t pid) {
+static void watch_program(pid_t pid) {
     int status;
 
 #ifdef USE_PTRACE
