@@ -46,9 +46,6 @@ extern int test_examine(int argc, char *argv[]) {
     prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0);
     prctl(PR_SET_DUMPABLE, 0, 0, 0, 0);
 
-    freopen("stdout.log", "w", stdout);
-    freopen("stderr.log", "w", stderr);
-
     /* 4. create a new process */
     pid = fork();
 
@@ -70,9 +67,6 @@ extern int test_examine(int argc, char *argv[]) {
     if (args) {
         free(args);
     }
-
-    fclose(stdout);
-    fclose(stderr);
 
     return 0;
 }
@@ -102,9 +96,6 @@ extern int py_examine(int argc, char *argv[]) {
     prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0);
     prctl(PR_SET_DUMPABLE, 0, 0, 0, 0);
 
-    freopen("stdout.log", "w", stdout);
-    freopen("stderr.log", "w", stderr);
-
     /* 4. create a new process */
     pid = fork();
 
@@ -127,12 +118,8 @@ extern int py_examine(int argc, char *argv[]) {
         free(args);
     }
 
-    fclose(stdout);
-    fclose(stderr);
-
     return 0;
 }
-
 
 static void run_solution(char **args) {
 
@@ -146,21 +133,9 @@ static void run_solution(char **args) {
     ptrace(PTRACE_TRACEME, 0, NULL, NULL);
 #endif
 
-    /* 2. use seccomp sandbox */
-    /* 2-1. initalize seccomp */
-    ctx = seccomp_init(SCMP_ACT_KILL);
-
-    /* 2-2. allow functions from whitelist */
-    for (int i = 0; i < size_of_whitelist_syscall; i++) {
-        seccomp_rule_add(ctx, SCMP_ACT_ALLOW, whitelist_syscall[i], 0);
-    }
-
-    /* 2-3. allow socket function for unix socket */
-    seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(socket), 1,
-            SCMP_A0(SCMP_CMP_EQ, AF_UNIX));
-
-    /* 2-4. load seccomp rules */
-    seccomp_load(ctx);
+    /* 2. input output redirection */
+    freopen("stdout.log", "w", stdout);
+    freopen("stderr.log", "w", stderr);
 
     /* 3. set resource limit */
     rlim.rlim_cur = rlim.rlim_max = TIME_LIMIT;
@@ -168,7 +143,23 @@ static void run_solution(char **args) {
         fprintf(stderr, "failed to limit cpu time: %dsec\n", TIME_LIMIT);
     }
 
-    /* 4. exec */
+    /* 4. use seccomp sandbox */
+    /* 4-1. initalize seccomp */
+    ctx = seccomp_init(SCMP_ACT_KILL);
+
+    /* 4-2. allow functions from whitelist */
+    for (int i = 0; i < size_of_whitelist_syscall; i++) {
+        seccomp_rule_add(ctx, SCMP_ACT_ALLOW, whitelist_syscall[i], 0);
+    }
+
+    /* 4-3. allow socket function for unix socket */
+    seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(socket), 1,
+            SCMP_A0(SCMP_CMP_EQ, AF_UNIX));
+
+    /* 4-4. load seccomp rules */
+    seccomp_load(ctx);
+
+    /* 5. exec */
     syscall(59, args[0], args, NULL);
 }
 
