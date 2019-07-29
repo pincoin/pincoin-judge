@@ -18,6 +18,9 @@
 #include "judge.h"
 #include "whitelist.h"
 
+#define IN 1
+#define OUT 0
+
 static int examine();
 static void run_solution(char **args);
 static void watch_program(pid_t pid);
@@ -70,6 +73,8 @@ extern int py_examine(int argc, char *argv[]) {
     if (args) {
         free(args);
     }
+
+    return 0;
 }
 
 extern int examine(char **args) {
@@ -104,7 +109,6 @@ extern int examine(char **args) {
 }
 
 static void run_solution(char **args) {
-
     /* NOTE: ctx variable is auto in order not to intefere parent syscalls */
     scmp_filter_ctx ctx;
 
@@ -116,8 +120,8 @@ static void run_solution(char **args) {
 #endif
 
     /* 2. input output redirection */
-    freopen("stdout.log", "w", stdout);
-    freopen("stderr.log", "w", stderr);
+    if (freopen("stdout.log", "w", stdout)) {};
+    if (freopen("stderr.log", "w", stderr)) {};
 
     /* 3. set resource limit */
     rlim.rlim_cur = rlim.rlim_max = TIME_LIMIT;
@@ -153,7 +157,7 @@ static void watch_program(pid_t pid) {
 
     long orig_rax;
     long rax;
-    int stopped = 0;
+    int state = OUT;
 #endif
 
     char pid_status_path[PID_STATUS_PATH_MAX];
@@ -205,19 +209,19 @@ static void watch_program(pid_t pid) {
         orig_rax = ptrace(PTRACE_PEEKUSER, pid, 8 * ORIG_RAX, NULL);
 
         if (orig_rax > -1) {
-            if (stopped == 1) {
+            if (state == IN) {
                 fprintf(stderr, "syscall(%ld)\n", orig_rax);
 
                 /* NOTE: MUST read all other general-purpose registers even if GPRs are not used */
                 ptrace(PTRACE_GETREGS, pid, NULL, &regs);
 
-                stopped = 0;
+                state = OUT;
             } else {
-                /* NOTE: MUST pop even if RAX is not used  */
-                rax  = ptrace(PTRACE_PEEKUSER, pid, 8 * RAX, NULL);
-                /* fprintf(stderr, " return with %ld\n", rax); */
+                /* NOTE: MUST pop even if RAX is not used */
+                rax = ptrace(PTRACE_PEEKUSER, pid, 8 * RAX, NULL);
+                rax++; /* suppress warning: -Wunused-but-set-variable */
 
-                stopped = 1;
+                state = IN;
             }
         }
 
@@ -229,7 +233,7 @@ static void watch_program(pid_t pid) {
         pid_status_file = fopen(pid_status_path, "r");
 
         if (pid_status_file) {
-            fread(buf, PID_STATUS_FILE_MAX - 1, 1, pid_status_file);
+            if (fread(buf, PID_STATUS_FILE_MAX - 1, 1, pid_status_file)) {};
             buf[PID_STATUS_FILE_MAX - 1] = '\0';
             fclose(pid_status_file);
 
