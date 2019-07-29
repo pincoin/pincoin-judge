@@ -80,19 +80,19 @@ extern int test_examine(int argc, char *argv[]) {
 extern int py_examine(int argc, char *argv[]) {
     pid_t  pid;
 
-    char **args = malloc(sizeof(char *) * argc);
+    char **args = malloc(sizeof(char *) * argc + 1);
     
     /* 1. make sure if argv provided */
-    if (argc < 2) {
-        fprintf(stderr, "Usage: %s requires arguments\n", argv[0]);
+    if (argc < 1) {
+        fprintf(stderr, "No arguments\n");
         exit(EXIT_FAILURE);
     }
 
     /* 2. make a NULL-terminated command */
-    for (int i = 0; i < argc - 1; i++) {
-        args[i] = strdup(argv[i + 1]);
+    for (int i = 0; i < argc; i++) {
+        args[i] = strdup(argv[i]);
     }
-    args[argc - 1] = NULL;
+    args[argc] = NULL;
 
     /* 3. process control */
     /* NOTE

@@ -2,5 +2,7 @@ import sandbox
 
 
 if __name__ == '__main__':
-    sandbox.examine(['/bin/date', ])
+    print('before')
+    print(sandbox.examine(['/bin/date', ]))
+    print('after')
 

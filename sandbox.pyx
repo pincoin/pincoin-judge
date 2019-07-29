@@ -7,7 +7,7 @@ cdef extern from "judge.h":
 def examine(args):
     cdef char **argv
 
-    args = [b'a.out'] + [bytes(x, encoding='utf-8') for x in args]
+    args = [bytes(x, encoding='utf-8') for x in args]
 
     argv = <char**>malloc(sizeof(char*) * len(args))
 
@@ -18,7 +18,8 @@ def examine(args):
         for i, s in enumerate(args):
             argv[i] = s
 
-        py_examine(len(args), argv)
+        return py_examine(len(args), argv)
+
     finally:
         print('task done')
         free(argv)
