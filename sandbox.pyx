@@ -2,9 +2,9 @@ from libc.stdlib cimport malloc, free
 from posix.types cimport pid_t
 
 cdef extern from "judge.h":
-    int examine(int argc, char *argv[])
+    int py_examine(int argc, char *argv[])
 
-def py_examine(args):
+def examine(args):
     cdef char **argv
 
     args = [b'a.out'] + [bytes(x, encoding='utf-8') for x in args]
@@ -18,7 +18,7 @@ def py_examine(args):
         for i, s in enumerate(args):
             argv[i] = s
 
-        examine(len(args), argv)
+        py_examine(len(args), argv)
     finally:
         print('task done')
         free(argv)

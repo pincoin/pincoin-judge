@@ -21,7 +21,7 @@
 static void run_solution(char **args);
 static void watch_program(pid_t pid);
 
-extern int examine(int argc, char *argv[]) {
+extern int test_examine(int argc, char *argv[]) {
     pid_t  pid;
 
     char **args = malloc(sizeof(char *) * argc);
@@ -76,6 +76,63 @@ extern int examine(int argc, char *argv[]) {
 
     return 0;
 }
+
+extern int py_examine(int argc, char *argv[]) {
+    pid_t  pid;
+
+    char **args = malloc(sizeof(char *) * argc);
+    
+    /* 1. make sure if argv provided */
+    if (argc < 2) {
+        fprintf(stderr, "Usage: %s requires arguments\n", argv[0]);
+        exit(EXIT_FAILURE);
+    }
+
+    /* 2. make a NULL-terminated command */
+    for (int i = 0; i < argc - 1; i++) {
+        args[i] = strdup(argv[i + 1]);
+    }
+    args[argc - 1] = NULL;
+
+    /* 3. process control */
+    /* NOTE
+     * PR_SET_NO_NEW_PRIVS = 1: ensures the process does not gain privileges
+     * PR_SET_DUMPABLE = 0: does not produce core dump
+     */
+    prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0);
+    prctl(PR_SET_DUMPABLE, 0, 0, 0, 0);
+
+    freopen("stdout.log", "w", stdout);
+    freopen("stderr.log", "w", stderr);
+
+    /* 4. create a new process */
+    pid = fork();
+
+    switch (pid) {
+        case -1:
+            fprintf(stderr, "failed to create a new process\n");
+            exit(EXIT_FAILURE);
+        case 0:
+            /* 4-1. run a solution as a child */
+            run_solution(args);
+            fprintf(stderr, "failed to replace process with %s\n", argv[1]);
+            exit(EXIT_FAILURE);
+    }
+
+    /* 4-2. watch program as a parent */
+    watch_program(pid);
+
+    /* 5. clean up */
+    if (args) {
+        free(args);
+    }
+
+    fclose(stdout);
+    fclose(stderr);
+
+    return 0;
+}
+
 
 static void run_solution(char **args) {
 

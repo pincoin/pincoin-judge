@@ -9,6 +9,7 @@
 #define MEMORY_LIMIT 50000
 #define TIME_LIMIT 1
 
-extern int examine(int argc, char *argv[]);
+extern int test_examine(int argc, char *argv[]);
+extern int py_examine(int argc, char *argv[]);
 
 #endif
